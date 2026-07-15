@@ -105,7 +105,6 @@
 </head>
 <body class="fade-in" id="mainBody">
 
-  <!-- 音频元素 -->
   <audio id="bgmInner" loop>
     <source src="../assets/audio/inner_world_ambient.mp3" type="audio/mpeg">
   </audio>
@@ -114,7 +113,6 @@
   <audio id="sfxAntiDebug" src="../assets/audio/anti_debug_warning.mp3"></audio>
   <audio id="sfxHorror" src="../assets/audio/horror_sting.mp3"></audio>
 
-  <!-- 桌面图标 -->
   <div class="desktop" id="desktop">
     <div class="desktop-icon" ondblclick="openWindow('我的电脑', '', 'mycomputer')"><div class="icon-img">🖥️</div><div>我的电脑</div></div>
     <div class="desktop-icon" ondblclick="openWindow('回收站', '', 'trash')"><div class="icon-img">🗑️</div><div>回收站</div></div>
@@ -131,7 +129,6 @@
     <div class="desktop-icon" ondblclick="openWindow('值班日志', 'app_duty_log.html', 'dutylog', '600px', '500px')"><div class="icon-img">📘</div><div>值班日志</div></div>
   </div>
 
-  <!-- 任务栏 -->
   <div class="taskbar">
     <div class="start-button" id="startButton"><span>▣</span> 开始</div>
     <div class="taskbar-divider"></div>
@@ -143,7 +140,6 @@
     </div>
   </div>
 
-  <!-- 开始菜单 -->
   <div class="start-menu" id="startMenu">
     <div class="start-menu-item" data-open="mycomputer">🖥️ 我的电脑</div>
     <div class="start-menu-item" data-open="diary">📓 日记</div>
@@ -160,7 +156,6 @@
     <div class="start-menu-item" data-open="dutylog">📘 值班日志</div>
   </div>
 
-  <!-- 日期/时间弹出面板 -->
   <div class="datetime-popup" id="datetimePopup">
     <div class="title-bar" id="popupTitleBar"><span>日期/时间</span><span class="title-btn close" onclick="closeDateTimePopup()">✕</span></div>
     <div class="popup-content">
@@ -169,18 +164,22 @@
     </div>
   </div>
 
-  <!-- 隐藏弹窗 -->
   <div class="hidden-popup" id="hiddenPopup">
     <div style="font-size:22px;">⚠ 异常进程</div>
     <div id="hiddenPopupMsg"></div>
     <button onclick="document.getElementById('hiddenPopup').style.display='none'">确定</button>
   </div>
 
-  <!-- 反窥探遮罩 -->
   <div class="anti-debug-overlay" id="antiDebugOverlay">
     <div class="scanlines"></div>
     <div class="glitch-box">
       <pre class="eye-art" id="eyeAsciiArt">
+
+      </pre>
+      <div class="title">不要试图直视祂的眼睛</div>
+      <button class="disconnect-btn" id="disconnectBtn">我已知晓</button>
+    </div>
+  </div>
 %##:---:-=-++====+++++==--::::::. .                 ..   ::. ::::--===++
 #+:.:-==**#%%@@@@@@@@@%%%###*+==::::.:                . . .:.::.::--==++
 +::=+*%@@@@@@@@@@@@@@@@%%%#####***+++=--:.:.       .  .:.:..:::::::--=++
@@ -206,12 +205,6 @@
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@%%%##*++=-:::-==+=+=+++++**%%@@@@@@@@@@@@@@@
 @@@@@@@@@@@@@@@@@@@@@@@@@%%###*#####*#***********+**##%%@@@@@@@@@@@@@@@@
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%%%%%%%#%#*#**#***#%%%@@@@@@@@@@@@@@@@@@@
-      </pre>
-      <div class="title">不要试图直视祂的眼睛</div>
-      <button class="disconnect-btn" id="disconnectBtn">我已知晓</button>
-    </div>
-  </div>
-
   <script>
     // ==================== 页面淡入 ====================
     document.addEventListener('DOMContentLoaded', function() {
@@ -241,7 +234,6 @@
       }
     }, 5000);
 
-    // ==================== 恐怖效果概率 ====================
     var HORROR_PROB = {
       dateCorrupt: 0.25,
       hiddenPopup: 0.05,
@@ -253,23 +245,17 @@
     var syncedDate = { text: '1998-12-24', isCorrupted: false };
     var clockCorrupted = false;
 
-    // ==================== 全局计数器（每次进入里世界重置） ====================
+    // ==================== 全局计数器 ====================
     var MAX_GLOBAL_ERRORS = 15;
     var MAX_GAZE_COUNT = 3;
     var globalErrors = 0;
     var gazeCount = 0;
 
-    // 清空旧数据，保证每次进入游戏都是干净状态
     localStorage.removeItem('global_errors');
     localStorage.removeItem('gaze_count');
-
-    // 清空所有应用访问令牌
     var resetKeys = ['personnel_access', 'evidence_access', 'comm_access', 'geo_access', 'true_ending_access'];
-    resetKeys.forEach(function(key) {
-      localStorage.removeItem(key);
-    });
+    resetKeys.forEach(function(key) { localStorage.removeItem(key); });
 
-    // 累加全局错误次数
     function incrementGlobalErrors() {
       globalErrors++;
       localStorage.setItem('global_errors', globalErrors);
@@ -278,7 +264,6 @@
       }
     }
 
-    // 累加反窥探次数
     function incrementGaze() {
       gazeCount++;
       localStorage.setItem('gaze_count', gazeCount);
@@ -384,23 +369,9 @@
       if (tab) tab.classList.add('active');
     }
 
-    function minimizeWindow(id) {
-      if (openWindows[id]) { openWindows[id].element.style.display = 'none'; openWindows[id].minimized = true; }
-    }
-
-    function restoreWindow(id) {
-      if (openWindows[id]) { openWindows[id].element.style.display = 'flex'; openWindows[id].minimized = false; focusWindow(id); }
-    }
-
-    function closeWindow(id) {
-      if (openWindows[id]) {
-        openWindows[id].element.remove();
-        var tab = document.querySelector('.taskbar-tab[data-window-id="' + id + '"]');
-        if (tab) tab.remove();
-        delete openWindows[id];
-      }
-    }
-
+    function minimizeWindow(id) { if (openWindows[id]) { openWindows[id].element.style.display = 'none'; openWindows[id].minimized = true; } }
+    function restoreWindow(id) { if (openWindows[id]) { openWindows[id].element.style.display = 'flex'; openWindows[id].minimized = false; focusWindow(id); } }
+    function closeWindow(id) { if (openWindows[id]) { openWindows[id].element.remove(); var tab = document.querySelector('.taskbar-tab[data-window-id="' + id + '"]'); if (tab) tab.remove(); delete openWindows[id]; } }
     function maximizeWindow(id) { }
 
     function addTaskbarTab(id, title) {
@@ -438,17 +409,9 @@
       document.addEventListener('mouseup', function() { drag = false; win.style.cursor = ''; });
     }
 
-    // ==================== 开始菜单 ====================
     var startMenu = document.getElementById('startMenu');
-    document.getElementById('startButton').addEventListener('click', function(e) {
-      e.stopPropagation();
-      startMenu.classList.toggle('visible');
-    });
-    document.addEventListener('click', function(e) {
-      if (!startMenu.contains(e.target) && e.target !== document.getElementById('startButton')) {
-        startMenu.classList.remove('visible');
-      }
-    });
+    document.getElementById('startButton').addEventListener('click', function(e) { e.stopPropagation(); startMenu.classList.toggle('visible'); });
+    document.addEventListener('click', function(e) { if (!startMenu.contains(e.target) && e.target !== document.getElementById('startButton')) { startMenu.classList.remove('visible'); } });
     document.querySelectorAll('.start-menu-item').forEach(function(item) {
       item.addEventListener('click', function() {
         var id = item.dataset.open;
@@ -459,7 +422,6 @@
       });
     });
 
-    // ==================== 时钟/日期/崩坏 ====================
     function getCurrentDate() {
       if (Math.random() < HORROR_PROB.dateCorrupt) {
         var cs = ['199█-1▉-2▉','19??-??-??','0000-00-00','1998-13-45','----.--.--','ERR:DATE'];
@@ -489,13 +451,11 @@
       var timeDisplay = document.getElementById('clockTimeDisplay');
       if (clockCorrupted) {
         timeDisplay.textContent = ['??:??', '##:##', 'EE:EE'][Math.floor(Math.random()*3)];
-        timeDisplay.style.color = 'darkred';
-        timeDisplay.classList.add('date-shaking');
+        timeDisplay.style.color = 'darkred'; timeDisplay.classList.add('date-shaking');
       } else {
         var now = new Date();
         timeDisplay.textContent = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-        timeDisplay.style.color = '#000';
-        timeDisplay.classList.remove('date-shaking');
+        timeDisplay.style.color = '#000'; timeDisplay.classList.remove('date-shaking');
       }
     }
 
@@ -503,7 +463,6 @@
     setInterval(updateTaskbarTime, 1000);
     updateSyncedDate();
 
-    // 日期时间弹出面板
     var datetimePopup = document.getElementById('datetimePopup');
     var popupCtx = document.getElementById('popupClockCanvas').getContext('2d');
     var popupDateInfo = document.getElementById('popupDateInfo');
@@ -549,7 +508,6 @@
     document.getElementById('systemTray').onclick = function(e) { e.stopPropagation(); datetimePopup.style.display === 'flex' ? closeDateTimePopup() : openDateTimePopup(); };
     document.addEventListener('click', function(e) { if (datetimePopup.style.display === 'flex' && !datetimePopup.contains(e.target) && e.target.id !== 'systemTray') closeDateTimePopup(); });
 
-    // ==================== 恐怖效果 ====================
     setInterval(function() {
       if (Math.random() < HORROR_PROB.screenShiver) {
         document.body.classList.add('shivering');
@@ -558,7 +516,6 @@
       }
     }, 120000);
 
-    // 隐藏弹窗
     var hiddenPopup = document.getElementById('hiddenPopup');
     var popupMsg = document.getElementById('hiddenPopupMsg');
     var popupMessages = [
@@ -581,7 +538,6 @@
     }
     setInterval(maybeShowHiddenPopup, 15000);
 
-    // ==================== 反窥探遮罩 ====================
     var antiDebugOverlay = document.getElementById('antiDebugOverlay');
     var disconnectBtn = document.getElementById('disconnectBtn');
     var isAntiDebugActive = false;
@@ -613,43 +569,33 @@
       else if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) { e.preventDefault(); showAntiDebugOverlay(); }
     });
 
-    // 加载眼睛ASCII
     fetch('../assets/eye_ascii.txt')
       .then(function(r) { return r.text(); })
-      .then(function(t) {
-        if (t.trim()) { document.getElementById('eyeAsciiArt').textContent = t; }
-      })
-      .catch(function() { /* 默认图案已显示 */ });
+      .then(function(t) { if (t.trim()) { document.getElementById('eyeAsciiArt').textContent = t; } })
+      .catch(function() {});
 
-    // ==================== 消息监听（解锁、恐怖效果、简报详情、结局触发） ====================
+    // ==================== 消息监听 ====================
     window.addEventListener('message', function(e) {
       if (!e.data || typeof e.data !== 'object') return;
 
-      // 应用解锁
       if (e.data.type === 'unlock') {
         var app = e.data.app;
         var token = e.data.token;
-        if (app && token) {
-          localStorage.setItem(app + '_access', 'true');
-        }
+        if (app && token) { localStorage.setItem(app + '_access', 'true'); }
       }
 
-      // 处理错误计数（每次输入错误都计数一次）
-      if (e.data.type === 'error_count') {
-        incrementGlobalErrors();
-      }
-
-      // 恐怖效果（屏幕震颤）- 保留原有的震颤触发，但不计数
       if (e.data.type === 'horror_effect') {
         var effect = e.data.effect;
         if (effect === 'screenShiver') {
           document.body.classList.add('shivering');
           setTimeout(function() { document.body.classList.remove('shivering'); }, 200);
-          // 移除这里的 incrementGlobalErrors()，避免重复计数
         }
       }
 
-      // 简报详情窗口
+      if (e.data.type === 'error_count') {
+        incrementGlobalErrors();
+      }
+
       if (e.data.type === 'open_briefing_detail') {
         var detail = e.data;
         var detailTitle = detail.title || '简报详情';
@@ -663,18 +609,14 @@
         openWindow(detailTitle, '', 'briefing_detail_' + Date.now(), '700px', '600px', detailHtml);
       }
 
-      // 结局触发（来自坐标定位或其他模块）
       if (e.data.type === 'trigger_ending') {
         var endingType = e.data.ending;
-        if (endingType) {
-          triggerEnding(endingType);
-        }
+        if (endingType) { triggerEnding(endingType); }
       }
     });
 
     // ==================== 结局跳转 ====================
     window.triggerEnding = function(type) {
-      // 重置计数器
       gazeCount = 0;
       globalErrors = 0;
       localStorage.setItem('gaze_count', '0');
