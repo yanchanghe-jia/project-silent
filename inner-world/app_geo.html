@@ -10,14 +10,17 @@
     html, body { height: 100%; overflow: hidden; background: #c0c0c0; font-family: 'Microsoft Sans Serif', 'VT323', monospace; }
     .app-container { display: flex; flex-direction: column; height: 100%; padding: 8px; }
     .app-header { background: #000080; color: white; padding: 6px 10px; font-size: 14px; font-weight: bold; margin-bottom: 6px; flex-shrink: 0; }
-    .search-box { display: flex; gap: 6px; margin-bottom: 8px; flex-shrink: 0; }
-    .search-box input { flex: 1; padding: 4px 8px; border: 2px inset #e0e0e0; font-family: 'VT323', monospace; font-size: 16px; background: #fff; }
-    .search-box button { padding: 4px 16px; background: #c0c0c0; border: 2px outset #e0e0e0; font-family: 'VT323', monospace; font-size: 14px; cursor: pointer; }
-    .search-box button:active { border-style: inset; }
+    .coord-box { margin-bottom: 8px; flex-shrink: 0; background: #f0f0f0; padding: 10px; border: 2px inset #e0e0e0; }
+    .coord-box .row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+    .coord-box .row:last-child { margin-bottom: 0; }
+    .coord-box label { font-weight: bold; min-width: 70px; font-size: 14px; }
+    .coord-box input { width: 60px; padding: 4px 6px; border: 2px inset #e0e0e0; font-family: 'VT323', monospace; font-size: 16px; text-align: center; }
+    .coord-box span { font-size: 14px; color: #333; }
+    .coord-box button { padding: 4px 16px; background: #c0c0c0; border: 2px outset #e0e0e0; font-family: 'VT323', monospace; font-size: 14px; cursor: pointer; margin-top: 8px; }
+    .coord-box button:active { border-style: inset; }
     .result-area { flex: 1; overflow: auto; background: #fff; border: 2px inset #e0e0e0; padding: 10px; font-size: 14px; line-height: 1.6; }
     .error { color: #aa0000; }
     .file-header { font-weight: bold; margin-bottom: 10px; }
-    .file-content { white-space: pre-wrap; }
     .map-placeholder { width: 100%; height: 150px; background: #ddd; display: flex; align-items: center; justify-content: center; margin: 10px 0; border: 1px solid #aaa; cursor: pointer; }
     .access-denied { color: #aa0000; text-align: center; margin-top: 50px; font-size: 18px; font-weight: bold; }
     .hidden { display: none; }
@@ -26,35 +29,48 @@
 <body>
   <div class="app-container">
     <div class="app-header">静湖镇警局 - 坐标定位系统</div>
-    <div class="search-box" id="searchBox">
-      <input type="text" id="queryInput" placeholder="输入坐标 (如 39°24'N, 115°48'E)">
+    <div class="coord-box" id="coordBox">
+      <div class="row">
+        <label>北纬:</label>
+        <input type="number" id="latDeg" placeholder="39" min="0" max="90"> °
+        <input type="number" id="latMin" placeholder="24" min="0" max="60"> ' N
+      </div>
+      <div class="row">
+        <label>东经:</label>
+        <input type="number" id="lngDeg" placeholder="115" min="0" max="180"> °
+        <input type="number" id="lngMin" placeholder="48" min="0" max="60"> ' E
+      </div>
       <button id="searchBtn">定位</button>
     </div>
     <div class="result-area" id="resultArea">
-      <p>请输入坐标进行定位。</p>
+      <p>请输入经纬度进行定位。线索可在物证和通讯记录中找到。</p>
     </div>
-    <div class="search-box hidden" id="codeBox">
-      <input type="text" id="codeInput" placeholder="输入口令">
-      <button id="codeBtn">确认</button>
+    <div class="coord-box hidden" id="codeBox">
+      <div class="row">
+        <label>口令:</label>
+        <input type="text" id="codeInput" placeholder="输入口令">
+        <button id="codeBtn">确认</button>
+      </div>
     </div>
   </div>
 
   <script>
-    // 检查访问令牌
     var accessToken = localStorage.getItem('geo_access');
     if (!accessToken) {
       document.getElementById('resultArea').innerHTML = '<div class="access-denied">访问被拒绝<br>该应用尚未授权</div>';
-      document.getElementById('searchBox').style.display = 'none';
+      document.getElementById('coordBox').style.display = 'none';
     } else {
       initApp();
     }
 
     function initApp() {
-      var correctCoord = "39°24'N, 115°48'E";
       var errorCount = 0;
       var SHAKE_THRESHOLD = 3;
 
-      var input = document.getElementById('queryInput');
+      var latDeg = document.getElementById('latDeg');
+      var latMin = document.getElementById('latMin');
+      var lngDeg = document.getElementById('lngDeg');
+      var lngMin = document.getElementById('lngMin');
       var btn = document.getElementById('searchBtn');
       var result = document.getElementById('resultArea');
       var codeBox = document.getElementById('codeBox');
@@ -73,35 +89,35 @@
         result.innerHTML = '';
         var header = document.createElement('div');
         header.className = 'file-header';
-        header.textContent = '坐标：静湖镇废弃观测站';
+        header.textContent = '坐标：北纬39°24\'，东经115°48\' —— 静湖镇废弃观测站';
         result.appendChild(header);
 
         var map = document.createElement('div');
         map.className = 'map-placeholder';
         map.innerHTML = '<span>[ 地图标记 ]<br>点击查看详情</span>';
         map.addEventListener('click', function() {
-          // 向父窗口发送普通结局消息
           window.parent.postMessage({ type: 'trigger_ending', ending: 'normal' }, '*');
         });
         result.appendChild(map);
 
-        // 如果已有真结局线索，显示口令输入框
         if (localStorage.getItem('true_ending_access') === 'true') {
           codeBox.classList.remove('hidden');
         }
       }
 
       function search() {
-        var query = input.value.trim().replace(/\s/g, '');
-        if (query === correctCoord.replace(/\s/g, '')) {
+        var latD = parseInt(latDeg.value) || 0;
+        var latM = parseInt(latMin.value) || 0;
+        var lngD = parseInt(lngDeg.value) || 0;
+        var lngM = parseInt(lngMin.value) || 0;
+
+        if (latD === 39 && latM === 24 && lngD === 115 && lngM === 48) {
           showLocation();
           errorCount = 0;
         } else {
           errorCount++;
-          displayResult('坐标无效。', true);
-          // 每次错误都发送计数消息给桌面
+          displayResult('坐标无效。请检查线索后重试。', true);
           window.parent.postMessage({ type: 'error_count' }, '*');
-          
           if (errorCount >= SHAKE_THRESHOLD) {
             window.parent.postMessage({ type: 'horror_effect', effect: 'screenShiver' }, '*');
             errorCount = 0;
@@ -110,12 +126,10 @@
       }
 
       btn.addEventListener('click', search);
-      input.addEventListener('keydown', function(e) { if (e.key === 'Enter') search(); });
 
       codeBtn.addEventListener('click', function() {
         var code = codeInput.value.trim().toUpperCase();
         if (code === 'CPEC') {
-          // 向父窗口发送真结局消息
           window.parent.postMessage({ type: 'trigger_ending', ending: 'true' }, '*');
         } else {
           alert('口令错误');
