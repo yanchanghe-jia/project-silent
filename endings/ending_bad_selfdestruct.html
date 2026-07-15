@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>结局：【净化】</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 100vw; height: 100vh;
+      background: url('../assets/images/ending_bg_red.png') no-repeat center center;
+      background-size: cover;
+      color: #ffffff;
+      font-family: 'Courier New', monospace;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+    }
+    .warning-text {
+      max-width: 600px;
+      font-size: 16px; line-height: 1.8;
+      text-shadow: 0 0 5px rgb(255, 255, 255);
+    }
+    .countdown {
+      font-size: 48px; margin: 20px 0;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  </style>
+</head>
+<body>
+  <div class="warning-text">
+    <p style="font-size:24px; margin-bottom:20px;">!! SYSTEM FAILURE !!</p>
+    <p>SILENT.EXE 已停止响应</p>
+    <p>所有数据将被永久删除</p>
+    <div class="countdown">0</div>
+    <p>一切线索灰飞烟灭。林越和真相一起，永远消失了。</p>
+    <p style="margin-top:30px; font-size:14px; color:#ffffff;">[ 系统自毁完成 ]</p>
+  </div>
+</body>
+</html>

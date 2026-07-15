@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>结局：【归档】</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 100vw; height: 100vh;
+      background: url('../assets/images/ending_bg_blue.png') no-repeat center center;
+      background-size: cover;
+      color: #cccccc;
+      font-family: 'Courier New', monospace;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: left;
+      padding: 40px;
+    }
+    .error-text {
+      max-width: 800px;
+      font-size: 14px; line-height: 1.6;
+      white-space: pre-wrap;
+    }
+    .blink { animation: blink 1s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  </style>
+</head>
+<body>
+  <div class="error-text">
+A fatal exception 0E has occurred at 0028:C000BEFS in VxD SILENT(01) +
+000028CF. The current application will be terminated.
+
+* Press any key to terminate the current application.
+* Press CTRL+ALT+DEL again to restart your computer. You will lose
+  any unsaved information in all applications.
+
+归档编号: C-1993-1224-042
+案件状态: 已结案
+失踪人员: 魏明远、林越
+
+你找到了过去的真相，却没能带回来来的人。
+一切已经归档，无人知晓，无人改变。
+
+                                         <span class="blink">Press any key to continue..._</span>
+  </div>
+</body>
+</html>
