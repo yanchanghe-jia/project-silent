@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>谜域 MYTHOS - 未解之谜探索社区</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #121212;
+      color: #ccc;
+      font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+      padding: 20px;
+      line-height: 1.6;
+      user-select: none;
+    }
+    .forum-header {
+      border-bottom: 1px solid #333;
+      padding-bottom: 15px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .forum-title { font-size: 22px; font-weight: bold; color: #fff; }
+    .forum-nav { font-size: 14px; color: #888; }
+    .post-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .post {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      padding: 20px;
+    }
+    .post.sticky {
+      border-left: 4px solid #4cc2ff;
+      background: #1e1e2e;
+    }
+    .post-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #e0e0e0;
+      margin-bottom: 8px;
+    }
+    .post-meta {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .post-content {
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    .post-actions {
+      display: flex;
+      gap: 15px;
+      font-size: 12px;
+      color: #888;
+    }
+    .download-btn {
+      display: inline-block;
+      padding: 6px 14px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      color: #4cc2ff;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-decoration: none;
+    }
+    .download-btn:hover { background: #333; }
+    .download-btn.disabled { opacity: 0.5; pointer-events: none; }
+    .progress-container {
+      display: none;
+      margin-top: 10px;
+      width: 100%;
+      max-width: 300px;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #333;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #4cc2ff;
+      transition: width 0.1s linear;
+    }
+    .progress-text { font-size: 12px; color: #888; margin-top: 4px; }
+    .complete-msg { color: #4cc2ff; font-size: 14px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="forum-header">
+    <div class="forum-title">谜域 MYTHOS</div>
+    <div class="forum-nav">未解之谜 · 都市传说 · 灵异调查</div>
+  </div>
+
+  <div class="post-list">
+    <!-- 置顶主帖 -->
+    <div class="post sticky">
+      <div class="post-title">关于静湖镇1998年案件，我拿到了一些内部文件</div>
+      <div class="post-meta">匿名用户 · 2024-11-15 23:47</div>
+      <div class="post-content">
+        <p>不知道还有没有人记得这个案子。我老家就在那个镇附近，前阵子整理阁楼发现了一个旧硬盘，里面居然藏着静湖镇1998年失踪案件的警方内部档案。</p>
+        <p>我把所有文件打包了一下，感兴趣的朋友可以下载研究。不过提醒一句，有些内容可能让人不太舒服。</p>
+        <p>文件解压后运行里面的程序，你会明白的。</p>
+      </div>
+      <div class="download-area" style="margin-top:10px;">
+        <div>
+          <a class="download-btn" id="downloadBtn">📦 silent_archive.zip (6.2 MB)</a>
+          <span style="color:#ff5f57;font-size:12px;margin-left:10px;">⚠ 来源不明，谨慎打开</span>
+        </div>
+        <div class="progress-container" id="progressContainer">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-text" id="progressText">正在下载... 0%</div>
+        </div>
+        <div class="complete-msg" id="completeMsg" style="display:none;">✅ 下载完成。文件已保存至桌面。</div>
+      </div>
+    </div>
+
+    <!-- 灌水帖与彩蛋 -->
+    <div class="post">
+      <div class="post-title">有人试过那个静湖镇的压缩包吗？</div>
+      <div class="post-meta">路人甲 · 2024-11-16 08:12</div>
+      <div class="post-content">昨天下载了，运行后电脑直接蓝屏了。有没有人和我一样？</div>
+      <div class="post-actions">💬 23 回复 · 👍 5</div>
+    </div>
+
+    <div class="post">
+      <div class="post-title">深夜探秘公众号又发新文了</div>
+      <div class="post-meta">吃瓜群众 · 2024-11-16 10:45</div>
+      <div class="post-content">大家看今天深夜探秘的推文了吗？又拿静湖镇那事儿水了一期，不过图片好像是真的。</div>
+      <div class="post-actions">💬 8 回复 · 👍 12</div>
+    </div>
+
+    <div class="post">
+      <div class="post-title">出大事了，我朋友去了那个观测站</div>
+      <div class="post-meta">匿名用户 · 2024-11-16 14:20</div>
+      <div class="post-content">我朋友叫林越，前几天说要去静湖镇实地考察，结果现在完全联系不上。有没有人认识他？看到他请立刻联系我。</div>
+      <div class="post-actions">💬 41 回复 · 👍 30</div>
+    </div>
+
+    <div class="post">
+      <div class="post-title">[灌水] 论坛怎么换头像？</div>
+      <div class="post-meta">新手上路 · 2024-11-15 19:30</div>
+      <div class="post-content">如题，找了半天没找到上传头像的地方。</div>
+      <div class="post-actions">💬 3 回复 · 👍 1</div>
+    </div>
+
+    <div class="post">
+      <div class="post-title">我是刚刚那个蓝屏的，现在鼠标自己在动</div>
+      <div class="post-meta">路人甲 · 2024-11-16 16:01</div>
+      <div class="post-content">电脑重启后桌面多了一个叫 SILENT 的文件，删不掉。有人知道怎么处理吗？</div>
+      <div class="post-actions">💬 17 回复 · 👍 8</div>
+    </div>
+
+    <div class="post">
+      <div class="post-title">[闲聊] 最近有什么好看的灵异小说推荐？</div>
+      <div class="post-meta">书虫 · 2024-11-15 22:15</div>
+      <div class="post-content">书荒了，求推荐。最好带点真实背景的。</div>
+      <div class="post-actions">💬 12 回复 · 👍 4</div>
+    </div>
+  </div>
+
+  <script>
+    // 下载逻辑（保持不变）
+    const downloadBtn = document.getElementById('downloadBtn');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const completeMsg = document.getElementById('completeMsg');
+    let downloaded = false;
+
+    downloadBtn.addEventListener('click', () => {
+      if (downloaded) return;
+      downloaded = true;
+      downloadBtn.classList.add('disabled');
+      progressContainer.style.display = 'block';
+
+      let percent = 0;
+      const interval = setInterval(() => {
+        percent += Math.random() * 15 + 5;
+        if (percent >= 100) {
+          percent = 100;
+          clearInterval(interval);
+          progressFill.style.width = '100%';
+          progressText.textContent = '下载完成 (100%)';
+          completeMsg.style.display = 'block';
+          // 通知父窗口下载完成
+          window.parent.postMessage({ type: 'download_complete', file: 'silent_archive.exe' }, '*');
+        } else {
+          progressFill.style.width = percent + '%';
+          progressText.textContent = '正在下载... ' + Math.floor(percent) + '%';
+        }
+      }, 300);
+    });
+  </script>
+</body>
+</html>
