@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>人员档案</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; background: #c0c0c0; font-family: 'Microsoft Sans Serif', 'VT323', monospace; }
+    .app-container { display: flex; flex-direction: column; height: 100%; padding: 8px; }
+    .app-header { background: #000080; color: white; padding: 6px 10px; font-size: 14px; font-weight: bold; margin-bottom: 6px; flex-shrink: 0; }
+    .search-box { display: flex; gap: 6px; margin-bottom: 8px; flex-shrink: 0; }
+    .search-box input { flex: 1; padding: 4px 8px; border: 2px inset #e0e0e0; font-family: 'VT323', monospace; font-size: 16px; background: #fff; }
+    .search-box button { padding: 4px 16px; background: #c0c0c0; border: 2px outset #e0e0e0; font-family: 'VT323', monospace; font-size: 14px; cursor: pointer; }
+    .search-box button:active { border-style: inset; }
+    .result-area { flex: 1; overflow: auto; background: #fff; border: 2px inset #e0e0e0; padding: 10px; font-size: 14px; line-height: 1.6; }
+    .error { color: #aa0000; }
+    .file-header { font-weight: bold; margin-bottom: 10px; }
+    .file-content { white-space: pre-wrap; }
+    .access-denied { color: #aa0000; text-align: center; margin-top: 50px; font-size: 18px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="app-header">静湖镇警局 - 人员档案系统</div>
+    <div class="search-box" id="searchBox">
+      <input type="text" id="queryInput" placeholder="输入工号">
+      <button id="searchBtn">检索</button>
+    </div>
+    <div class="result-area" id="resultArea">
+      <p>请输入工号进行查询。</p>
+    </div>
+  </div>
+
+  <script>
+    const accessToken = localStorage.getItem('personnel_access');
+    if (!accessToken) {
+      document.getElementById('resultArea').innerHTML = '<div class="access-denied">访问被拒绝<br>该应用尚未授权</div>';
+      document.getElementById('searchBox').style.display = 'none';
+    } else {
+      initApp();
+    }
+
+    function initApp() {
+      // 数据库键全部为工号
+      const personnelDB = {
+        '042': {
+          name: '何淑华',
+          id: '042',
+          title: '人员档案 - 工号 #042',
+          content: `姓名: 何淑华
+工号: 042
+职务: 静湖镇天文观测站门卫
+住址: 静湖镇北区平安街12号
+电话: 0398-7654002
+
+备注: 1998年12月24日值夜班，是失踪研究员魏明远的最后目击者。当晚曾使用观测站无线电与警局通话，通话记录编号前三位为 COM-7，后两位数字因标签污损无法辨认，但物证袋中可能保留了完整信息。`,
+          unlock: 'evidence'
+        },
+        '018': { title: '人员档案 - 工号 #018', content: '姓名: 魏明远\n工号: 018\n职务: 天文观测站研究员\n状态: 失踪' },
+        '035': { title: '人员档案 - 工号 #035', content: '姓名: 张伟\n工号: 035\n职务: 副研究员\n备注: 请假回家探亲，案发时不在场' },
+        '077': { title: '人员档案 - 工号 #077', content: '姓名: 刘洋\n工号: 077\n职务: 实习生\n备注: 实习期至1999年1月' },
+        '101': { title: '人员档案 - 工号 #101', content: '姓名: 王志国\n工号: 101\n职务: 巡警队长' },
+        '102': { title: '人员档案 - 工号 #102', content: '姓名: 李军\n工号: 102\n职务: 刑警' },
+        '103': { title: '人员档案 - 工号 #103', content: '姓名: 陈晓\n工号: 103\n职务: 文职' },
+        '104': { title: '人员档案 - 工号 #104', content: '姓名: 孙强\n工号: 104\n职务: 交警' },
+        '105': { title: '人员档案 - 工号 #105', content: '姓名: 赵磊\n工号: 105\n职务: 法医' },
+        '205': { title: '人员档案 - 工号 #205', content: '姓名: 李芳\n工号: 205\n职务: 护士' },
+        '098': { title: '人员档案 - 工号 #098', content: '姓名: 赵敏\n工号: 098\n职务: 护士长' },
+        '330': { title: '人员档案 - 工号 #330', content: '姓名: 赵强\n工号: 330\n职务: 消防队长' },
+        '502': { title: '人员档案 - 工号 #502', content: '姓名: 吴志远\n工号: 502\n职务: 文化站站长' }
+      };
+
+      let errorCount = 0;
+      const SHAKE_THRESHOLD = 3;
+      const input = document.getElementById('queryInput');
+      const btn = document.getElementById('searchBtn');
+      const result = document.getElementById('resultArea');
+
+      function displayResult(message, isError = false) {
+        result.innerHTML = '';
+        const p = document.createElement('div');
+        p.className = isError ? 'error' : '';
+        p.innerHTML = message;
+        result.appendChild(p);
+      }
+
+      function showFile(data) {
+        result.innerHTML = '';
+        const header = document.createElement('div');
+        header.className = 'file-header';
+        header.textContent = data.title;
+        result.appendChild(header);
+        const content = document.createElement('div');
+        content.className = 'file-content';
+        content.textContent = data.content;
+        result.appendChild(content);
+        if (data.unlock && window.parent !== window) {
+          window.parent.postMessage({ type: 'unlock', app: data.unlock, token: true }, '*');
+        }
+      }
+
+      function search() {
+        const query = input.value.trim();
+        if (!query) { displayResult('请输入工号。', true); return; }
+        // 仅匹配工号
+        const record = personnelDB[query];
+        if (record) {
+          showFile(record);
+          errorCount = 0;
+        } else {
+          errorCount++;
+          displayResult('查无此人。请确认工号无误。', true);
+          // 每次错误都发送计数消息给桌面
+          window.parent.postMessage({ type: 'error_count' }, '*');
+         
+          if (errorCount >= SHAKE_THRESHOLD) {
+            if (window.parent !== window) {
+              window.parent.postMessage({ type: 'horror_effect', effect: 'screenShiver' }, '*');
+            }
+            errorCount = 0;
+          }
+        }
+      }
+
+      btn.addEventListener('click', search);
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') search(); });
+    }
+  </script>
+</body>
+</html>

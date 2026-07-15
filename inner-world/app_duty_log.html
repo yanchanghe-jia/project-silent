@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>值班日志</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      background: #c0c0c0;
+      font-family: 'Microsoft Sans Serif', 'VT323', monospace;
+      user-select: none;
+    }
+    .duty-container {
+      height: 100%; overflow-y: auto; padding: 10px;
+      background: #fff; border: 2px inset #e0e0e0; margin: 8px;
+    }
+    .section-title {
+      background: #000080; color: white; padding: 4px 8px;
+      font-size: 14px; font-weight: bold; margin: 15px 0 10px 0;
+    }
+    .log-entry {
+      margin-bottom: 12px; border-bottom: 1px dotted #ccc; padding-bottom: 8px;
+    }
+    .log-date { font-weight: bold; color: #000080; }
+    .log-content { margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="duty-container">
+    <div style="text-align:center; font-weight:bold; margin-bottom:15px;">
+      观测站值班日志 (1998年12月)
+    </div>
+
+    <div class="log-entry">
+      <div class="log-date">12月1日 值班人: 张伟</div>
+      <div class="log-content">天气晴。设备运行正常，无异常情况。接待游客3人。</div>
+    </div>
+    <div class="log-entry">
+      <div class="log-date">12月2日 值班人: 张伟</div>
+      <div class="log-content">多云。望远镜校准完成。夜间无异常。</div>
+    </div>
+    <div class="log-entry">
+      <div class="log-date">12月3日 值班人: 刘洋</div>
+      <div class="log-content">阴天。无游客。整理观测数据。</div>
+    </div>
+    <div class="log-entry">
+      <div class="log-date">12月4日 值班人: 魏明远</div>
+      <div class="log-content">小雪。观测到一颗小行星掠过。设备正常。</div>
+    </div>
+    <div class="log-entry">
+      <div class="log-date">12月5日 值班人: 魏明远</div>
+      <div class="log-content">晴。夜间收到一组微弱脉冲信号，来源不明，已记录。待进一步分析。</div>
+    </div>
+    <div class="log-entry">
+      <div class="log-date">12月6日 值班人: 张伟</div>
+      <div class="log-content">晴。无异常。何淑华请假，临时由我值班。</div>
+    </div>
+    <div class="log-entry">
+      <div class="log-date">12月7日 值班人: 刘洋</div>
+      <div class="log-content">多云。设备例行维护。</div>
+    </div>
+    <div class="log-entry">
+      <div class="log-date">12月8日 值班人: 何淑华</div>
+      <div class="log-content">阴天。无游客。无线电有杂音，尝试调整频率后恢复。</div>
+    </div>
+    <div class="log-entry">
+      <div class="log-date">12月9日 值班人: 张伟</div>
+      <div class="log-content">晴。正常。</div>
+    </div>
+    <div class="log-entry">
+      <div class="log-date">12月10日 值班人: 何淑华</div>
+      <div class="log-content">小雪。无异常。</div>
+    </div>
+    <!-- 关键记录 -->
+    <div class="log-entry">
+      <div class="log-date" style="color:#660000;">12月24日 值班人: 何淑华</div>
+      <div class="log-content">暴雪。夜间无线电出现持续脉冲信号，似有规律。与警局通话一次，记录编号<u>COM-778</u>。凌晨发现魏明远失踪，立即报警。</div>
+    </div>
+    <div class="log-entry">
+      <div class="log-date">12月25日 值班人: 张伟</div>
+      <div class="log-content">暴雪。警方封锁现场。协助调查。</div>
+    </div>
+  </div>
+</body>
+</html>

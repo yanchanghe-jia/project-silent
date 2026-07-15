@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>物证追踪</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; background: #c0c0c0; font-family: 'Microsoft Sans Serif', 'VT323', monospace; }
+    .app-container { display: flex; flex-direction: column; height: 100%; padding: 8px; }
+    .app-header { background: #000080; color: white; padding: 6px 10px; font-size: 14px; font-weight: bold; margin-bottom: 6px; flex-shrink: 0; }
+    .search-box { display: flex; gap: 6px; margin-bottom: 8px; flex-shrink: 0; }
+    .search-box input { flex: 1; padding: 4px 8px; border: 2px inset #e0e0e0; font-family: 'VT323', monospace; font-size: 16px; background: #fff; }
+    .search-box button { padding: 4px 16px; background: #c0c0c0; border: 2px outset #e0e0e0; font-family: 'VT323', monospace; font-size: 14px; cursor: pointer; }
+    .search-box button:active { border-style: inset; }
+    .result-area { flex: 1; overflow: auto; background: #fff; border: 2px inset #e0e0e0; padding: 10px; font-size: 14px; line-height: 1.6; }
+    .error { color: #aa0000; }
+    .file-header { font-weight: bold; margin-bottom: 10px; }
+    .file-content { white-space: pre-wrap; }
+    .evidence-image-container { text-align: center; margin: 10px 0; }
+    .evidence-image { max-width: 200px; height: auto; border: 1px solid #aaa; }
+    .access-denied { color: #aa0000; text-align: center; margin-top: 50px; font-size: 18px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="app-header">静湖镇警局 - 物证追踪系统</div>
+    <div class="search-box" id="searchBox">
+      <input type="text" id="queryInput" placeholder="输入物证编号 (格式：EV-xxx)">
+      <button id="searchBtn">检索</button>
+    </div>
+    <div class="result-area" id="resultArea">
+      <p>请输入物证编号进行查询。</p>
+    </div>
+  </div>
+
+  <script>
+    const accessToken = localStorage.getItem('evidence_access');
+    if (!accessToken) {
+      document.getElementById('resultArea').innerHTML = '<div class="access-denied">访问被拒绝<br>该应用尚未授权</div>';
+      document.getElementById('searchBox').style.display = 'none';
+    } else {
+      initApp();
+    }
+
+    function initApp() {
+      // 所有物证的 image 字段改为数字编号
+      const evidenceDB = {
+        'EV-031': {
+          title: '物证 #EV-031 - 便携式无线电',
+          content: `物证编号: EV-031
+采集地点: 静湖镇天文观测站
+采集时间: 1998-12-25
+描述: 一台损坏的便携式无线电对讲机，外壳有裂痕，内部电路烧焦。背面贴有手写标签，部分字迹模糊，可辨认最后两位数字为 "78"，其前似有 "COM-7" 字样。
+备注: 设备中发现一组手写数字：北纬39度24分，东经115度48分。`,
+          image: '031',
+          unlock: 'comm'
+        },
+        'EV-001': { title: '物证 #EV-001 - 现场烟蒂', content: '物证编号: EV-001\n采集地点: 观测站外围\n描述: 普通香烟过滤嘴，品牌为"红塔山"，DNA检测无匹配记录。', image: '001' },
+        'EV-002': { title: '物证 #EV-002 - 碎玻璃片', content: '物证编号: EV-002\n采集地点: 观测站穹顶下方\n描述: 疑似来自望远镜目镜的玻璃碎片，边缘锋利。', image: '002' },
+        'EV-003': { title: '物证 #EV-003 - 鞋印石膏模型', content: '物证编号: EV-003\n采集地点: 观测站入口泥地\n描述: 尺码42码运动鞋鞋印，品牌为"双星"。', image: '003' },
+        'EV-004': { title: '物证 #EV-004 - 指纹提取卡', content: '物证编号: EV-004\n采集地点: 观测站门把手\n描述: 提取到三枚不完整指纹，其中一枚与门卫何淑华匹配。', image: '004' },
+        'EV-005': { title: '物证 #EV-005 - 毛发样本', content: '物证编号: EV-005\n采集地点: 观测站值班室床铺\n描述: 黑色短发，经检测为人类毛发，DNA与失踪者魏明远吻合。', image: '005' },
+        'EV-006': { title: '物证 #EV-006 - 纸张残片', content: '物证编号: EV-006\n采集地点: 观测站垃圾桶\n描述: 烧焦的纸张残片，可辨认部分字迹："信号源确认，坐标已记录"。', image: '006' },
+        'EV-007': { title: '物证 #EV-007 - 电池', content: '物证编号: EV-007\n采集地点: 无线电附近\n描述: 5号碱性电池两节，电力耗尽，品牌为"白象"。', image: '007' },
+        'EV-008': { title: '物证 #EV-008 - 钥匙串', content: '物证编号: EV-008\n采集地点: 观测站储物柜\n描述: 三把钥匙，分别标有"大门"、"穹顶"、"机房"。', image: '008' },
+        'EV-009': { title: '物证 #EV-009 - 工作证', content: '物证编号: EV-009\n采集地点: 观测站办公桌\n描述: 魏明远的工作证，照片已被撕去。', image: '009' },
+        'EV-010': { title: '物证 #EV-010 - 手表', content: '物证编号: EV-010\n采集地点: 观测站值班室\n描述: 上海牌机械手表，已停走，时间停在2:33。', image: '010' },
+        'EV-012': { title: '物证 #EV-012 - 手电筒', content: '物证编号: EV-012\n描述: 普通手电筒，无异常。', image: '012' },
+        'EV-014': { title: '物证 #EV-014 - 望远镜目镜', content: '物证编号: EV-014\n描述: 已损坏，镜片有裂纹。', image: '014' },
+        'EV-023': { title: '物证 #EV-023 - 金属片', content: '物证编号: EV-023\n采集地点: 观测站机房\n描述: 带有刻痕的金属片，疑似机械零件。', image: '023' },
+        'EV-041': { title: '物证 #EV-041 - 票据', content: '物证编号: EV-041\n采集地点: 观测站抽屉\n描述: 一张超市购物小票，日期1998-12-23，购买了方便面、电池。', image: '041' },
+        'EV-055': { title: '物证 #EV-055 - 工作服', content: '物证编号: EV-055\n描述: 研究员工作服，口袋中发现一张纸条，字迹模糊。', image: '055' },
+        'EV-062': { title: '物证 #EV-062 - 照片', content: '物证编号: EV-062\n采集地点: 值班室相框\n描述: 一张观测站全体员工的合影，拍摄于1998年10月。', image: '062' },
+        'EV-078': { title: '物证 #EV-078 - 望远镜', content: '物证编号: EV-078\n描述: 天文望远镜目镜，已损坏。', image: '078' },
+        'EV-081': { title: '物证 #EV-081 - 指南针', content: '物证编号: EV-081\n采集地点: 观测站仓库\n描述: 军用指南针，指针无规则摆动，疑似受强磁场干扰。', image: '081' },
+        'EV-094': { title: '物证 #EV-094 - 旧报纸', content: '物证编号: EV-094\n采集地点: 观测站休息室\n描述: 1998年12月25日的报纸，头版为暴雪预警，无异常。', image: '094' },
+        'EV-102': { title: '物证 #EV-102 - 笔记本', content: '物证编号: EV-102\n描述: 魏明远的个人笔记本，大多数页面被撕毁。仅存一页写着："它在看我"。', image: '102' },
+        'EV-105': { title: '物证 #EV-105 - 不明纤维', content: '物证编号: EV-105\n采集地点: 观测站穹顶裂缝\n描述: 黑色纤维，质地异常坚韧，化验成分不明。', image: '105' },
+        'EV-118': { title: '物证 #EV-118 - 录音带', content: '物证编号: EV-118\n采集地点: 观测站控制室\n描述: 一盒微型录音带，内容为持续的脉冲信号，无语音。', image: '118' },
+        'EV-120': { title: '物证 #EV-120 - 日记本残页', content: '物证编号: EV-120\n采集地点: 魏明远宿舍\n描述: 日记残页，日期1998-12-23，最后一行写着："它通过无线电说话。"', image: '120' },
+        'EV-121': { title: '物证 #EV-121 - 雨伞', content: '物证编号: EV-121\n采集地点: 观测站门口\n描述: 一把普通雨伞，无异常。', image: '121' },
+        'EV-122': { title: '物证 #EV-122 - 手套', content: '物证编号: EV-122\n采集地点: 观测站值班室\n描述: 一副棉手套，无异常。', image: '122' },
+        'EV-123': { title: '物证 #EV-123 - 饭盒', content: '物证编号: EV-123\n采集地点: 观测站休息室\n描述: 铝制饭盒，内有剩饭。', image: '123' },
+        'EV-124': { title: '物证 #EV-124 - 钢笔', content: '物证编号: EV-124\n采集地点: 观测站办公桌\n描述: 一支钢笔，笔帽遗失。', image: '124' },
+        'EV-125': { title: '物证 #EV-125 - 日历', content: '物证编号: EV-125\n采集地点: 观测站值班室\n描述: 台历，翻到1998年12月24日。', image: '125' },
+        'EV-126': { title: '物证 #EV-126 - 墨镜', content: '物证编号: EV-126\n采集地点: 观测站储物柜\n描述: 一副墨镜，无异常。', image: '126' },
+        'EV-127': { title: '物证 #EV-127 - 磁带', content: '物证编号: EV-127\n采集地点: 观测站控制室\n描述: 普通录音带，内容为空。', image: '127' },
+        'EV-128': { title: '物证 #EV-128 - 钥匙', content: '物证编号: EV-128\n采集地点: 观测站大门旁\n描述: 一把备用钥匙。', image: '128' },
+        'EV-129': { title: '物证 #EV-129 - 保温杯', content: '物证编号: EV-129\n采集地点: 观测站休息室\n描述: 不锈钢保温杯，无异常。', image: '129' },
+        'EV-130': { title: '物证 #EV-130 - 报纸', content: '物证编号: EV-130\n采集地点: 观测站邮箱\n描述: 1998年12月23日的晚报，无异常。', image: '130' }
+      };
+
+      let errorCount = 0;
+      const SHAKE_THRESHOLD = 3;
+      const input = document.getElementById('queryInput');
+      const btn = document.getElementById('searchBtn');
+      const result = document.getElementById('resultArea');
+
+      function displayResult(message, isError = false) {
+        result.innerHTML = '';
+        const p = document.createElement('div');
+        p.className = isError ? 'error' : '';
+        p.innerHTML = message;
+        result.appendChild(p);
+      }
+
+      function showFile(data) {
+        result.innerHTML = '';
+        // 显示图片
+        if (data.image) {
+          var imgContainer = document.createElement('div');
+          imgContainer.className = 'evidence-image-container';
+          var img = document.createElement('img');
+          img.className = 'evidence-image';
+          img.src = '../assets/images/evidence_' + data.image + '.png';
+          img.alt = '物证照片';
+          img.onerror = function() {
+            this.style.display = 'none';
+            var fallback = document.createElement('div');
+            fallback.textContent = '[ 物证照片 - EV-' + data.image + ' ]';
+            fallback.style.cssText = 'width:200px; height:150px; background:#ddd; display:flex; align-items:center; justify-content:center; color:#888; font-size:12px; border:1px solid #aaa; margin:0 auto;';
+            imgContainer.appendChild(fallback);
+          };
+          imgContainer.appendChild(img);
+          result.appendChild(imgContainer);
+        }
+
+        const header = document.createElement('div');
+        header.className = 'file-header';
+        header.textContent = data.title;
+        result.appendChild(header);
+        const content = document.createElement('div');
+        content.className = 'file-content';
+        content.textContent = data.content;
+        result.appendChild(content);
+
+        if (data.unlock && window.parent !== window) {
+          window.parent.postMessage({ type: 'unlock', app: data.unlock, token: true }, '*');
+        }
+      }
+
+      function search() {
+        const query = input.value.trim().toUpperCase();
+        if (!query) { displayResult('请输入物证编号。', true); return; }
+        const record = evidenceDB[query];
+        if (record) {
+          showFile(record);
+          errorCount = 0;
+        } else {
+          errorCount++;
+          displayResult('物证不存在或已被转移。', true);
+          // 每次错误都发送计数消息给桌面
+        
+          window.parent.postMessage({ type: 'error_count' }, '*');
+
+          if (errorCount >= SHAKE_THRESHOLD) {
+            if (window.parent !== window) {
+              window.parent.postMessage({ type: 'horror_effect', effect: 'screenShiver' }, '*');
+            }
+            errorCount = 0;
+          }
+        }
+      }
+
+      btn.addEventListener('click', search);
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') search(); });
+    }
+  </script>
+</body>
+</html>

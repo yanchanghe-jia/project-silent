@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>通讯记录</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      background: #c0c0c0;
+      font-family: 'Microsoft Sans Serif', 'VT323', monospace;
+      user-select: none;
+    }
+    .app-container {
+      display: flex; flex-direction: column; height: 100%; padding: 8px;
+    }
+    .app-header {
+      background: #000080; color: white; padding: 6px 10px;
+      font-size: 14px; font-weight: bold; margin-bottom: 6px; flex-shrink: 0;
+    }
+    .search-box {
+      display: flex; gap: 6px; margin-bottom: 8px; flex-shrink: 0;
+    }
+    .search-box input {
+      flex: 1; padding: 4px 8px; border: 2px inset #e0e0e0;
+      font-family: 'VT323', monospace; font-size: 16px; background: #fff;
+    }
+    .search-box button {
+      padding: 4px 16px; background: #c0c0c0; border: 2px outset #e0e0e0;
+      font-family: 'VT323', monospace; font-size: 14px; cursor: pointer;
+    }
+    .search-box button:active { border-style: inset; }
+    .result-area {
+      flex: 1; overflow: auto; background: #fff;
+      border: 2px inset #e0e0e0; padding: 10px;
+      font-size: 14px; line-height: 1.6;
+    }
+    .error { color: #aa0000; }
+    .file-header { font-weight: bold; margin-bottom: 10px; }
+    .file-content { white-space: pre-wrap; }
+    .access-denied {
+      color: #aa0000; text-align: center; margin-top: 50px;
+      font-size: 18px; font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="app-header">静湖镇警局 - 通讯记录系统</div>
+    <div class="search-box" id="searchBox">
+      <input type="text" id="queryInput" placeholder="输入通讯ID (格式：COM-xxx)">
+      <button id="searchBtn">检索</button>
+    </div>
+    <div class="result-area" id="resultArea">
+      <p>请输入通讯ID进行查询。</p>
+    </div>
+  </div>
+
+  <script>
+    const accessToken = localStorage.getItem('comm_access');
+    if (!accessToken) {
+      document.getElementById('resultArea').innerHTML = '<div class="access-denied">访问被拒绝<br>该应用尚未授权</div>';
+      document.getElementById('searchBox').style.display = 'none';
+    } else {
+      initApp();
+    }
+
+    function initApp() {
+      const commDB = {
+        // 关键记录
+        'COM-778': {
+          title: '通讯记录 - COM-778 (电话录音)',
+          content: `通讯ID: COM-778
+日期: 1998-12-24
+通话时长: 00:45
+呼叫人: 何淑华
+内容摘要:
+"我听到了那个声音……像是某种信号，一直在重复……他说什么眼睛……巨大的眼睛……坐标是北纬39度24分，东经115度48分……我得把它记下来……"
+背景中可听到持续的低频脉冲声。`,
+          unlock: 'geo'
+        },
+        'COM-000': {
+          title: '通讯记录 - COM-000 (加密信息)',
+          content: `通讯ID: COM-000
+日期: 1998-12-24
+来源: 魏明远
+内容:
+"如果你看到这条消息，说明我失败了。那个东西……它根本不是信号，是活体。它通过观测站的无线电与人交流。我把最终的口令藏在了四个应用里。案宗、人员、物证、通讯，它们的首字母就是钥匙。找到它，结束这一切。"`,
+          unlock: 'true_ending'
+        },
+        // 大量干扰记录
+        'COM-101': { title: '通讯记录 - COM-101', content: '通讯ID: COM-101\n日期: 1998-12-20\n类型: 日常调度\n内容: 观测站物资配送确认，无异常。' },
+        'COM-102': { title: '通讯记录 - COM-102', content: '通讯ID: COM-102\n日期: 1998-12-19\n类型: 设备报修\n内容: 穹顶旋转电机故障，已联系厂家维修。' },
+        'COM-103': { title: '通讯记录 - COM-103', content: '通讯ID: COM-103\n日期: 1998-12-18\n类型: 员工请假\n内容: 研究员张伟请假三天，回家探亲。' },
+        'COM-104': { title: '通讯记录 - COM-104', content: '通讯ID: COM-104\n日期: 1998-12-17\n类型: 同事闲聊\n内容: 无实质内容。' },
+        'COM-105': { title: '通讯记录 - COM-105', content: '通讯ID: COM-105\n日期: 1998-12-16\n类型: 气象通知\n内容: 未来三天有降雪，提醒观测站做好防冻措施。' },
+        'COM-201': { title: '通讯记录 - COM-201', content: '通讯ID: COM-201\n日期: 1998-12-15\n类型: 会议通知\n内容: 年终总结会议定于12月25日举行。' },
+        'COM-202': { title: '通讯记录 - COM-202', content: '通讯ID: COM-202\n日期: 1998-12-14\n类型: 财务审批\n内容: 观测站维修经费已批复。' },
+        'COM-203': { title: '通讯记录 - COM-203', content: '通讯ID: COM-203\n日期: 1998-12-13\n类型: 物资采购\n内容: 订购实验耗材一批。' },
+        'COM-204': { title: '通讯记录 - COM-204', content: '通讯ID: COM-204\n日期: 1998-12-12\n类型: 安保检查\n内容: 观测站消防设施检查合格。' },
+        'COM-205': { title: '通讯记录 - COM-205', content: '通讯ID: COM-205\n日期: 1998-12-11\n类型: 天气预警\n内容: 暴雪将至，请所有单位注意安全。' },
+        'COM-301': { title: '通讯记录 - COM-301', content: '通讯ID: COM-301\n日期: 1998-12-10\n类型: 警务通知\n内容: 年终考核安排。' },
+        'COM-302': { title: '通讯记录 - COM-302', content: '通讯ID: COM-302\n日期: 1998-12-09\n类型: 投诉处理\n内容: 居民投诉观测站夜间灯光扰民。' },
+        'COM-303': { title: '通讯记录 - COM-303', content: '通讯ID: COM-303\n日期: 1998-12-08\n类型: 医疗急救\n内容: 观测站一名员工跌倒受伤，已送医。' },
+        'COM-304': { title: '通讯记录 - COM-304', content: '通讯ID: COM-304\n日期: 1998-12-07\n类型: 车辆调度\n内容: 安排车辆接送观测站员工。' },
+        'COM-305': { title: '通讯记录 - COM-305', content: '通讯ID: COM-305\n日期: 1998-12-06\n类型: 电力报修\n内容: 观测站附近线路老化，申请更换。' },
+        'COM-401': { title: '通讯记录 - COM-401', content: '通讯ID: COM-401\n日期: 1998-12-05\n类型: 安全检查\n内容: 观测站实验室安全隐患排查。' },
+        'COM-402': { title: '通讯记录 - COM-402', content: '通讯ID: COM-402\n日期: 1998-12-04\n类型: 培训通知\n内容: 新设备操作培训。' },
+        'COM-403': { title: '通讯记录 - COM-403', content: '通讯ID: COM-403\n日期: 1998-12-03\n类型: 访客登记\n内容: 一名自称记者的访客要求参观观测站，被拒绝。' },
+        'COM-404': { title: '通讯记录 - COM-404', content: '通讯ID: COM-404\n日期: 1998-12-02\n类型: 内部通知\n内容: 元旦放假安排。' },
+        'COM-405': { title: '通讯记录 - COM-405', content: '通讯ID: COM-405\n日期: 1998-12-01\n类型: 例行汇报\n内容: 11月观测数据汇总。' },
+        'COM-501': { title: '通讯记录 - COM-501', content: '通讯ID: COM-501\n日期: 1998-11-30\n类型: 内部调度\n内容: 安排巡逻路线，无异常。' },
+        'COM-502': { title: '通讯记录 - COM-502', content: '通讯ID: COM-502\n日期: 1998-11-29\n类型: 设备报修\n内容: 值班室电话故障，已报修。' },
+    'COM-503': { title: '通讯记录 - COM-503', content: '通讯ID: COM-503\n日期: 1998-11-28\n类型: 同事闲聊\n内容: 讨论年终奖金发放。' },
+    'COM-504': { title: '通讯记录 - COM-504', content: '通讯ID: COM-504\n日期: 1998-11-27\n类型: 气象通知\n内容: 降雪预警提前发布。' },
+    'COM-601': { title: '通讯记录 - COM-601', content: '通讯ID: COM-601\n日期: 1998-11-26\n类型: 警务通知\n内容: 下周进行体能测试。' },
+    'COM-602': { title: '通讯记录 - COM-602', content: '通讯ID: COM-602\n日期: 1998-11-25\n类型: 投诉处理\n内容: 居民投诉噪声扰民，已处理。' },
+    'COM-603': { title: '通讯记录 - COM-603', content: '通讯ID: COM-603\n日期: 1998-11-24\n类型: 医疗急救\n内容: 观测站一名员工头晕，无大碍。' },
+    'COM-604': { title: '通讯记录 - COM-604', content: '通讯ID: COM-604\n日期: 1998-11-23\n类型: 车辆调度\n内容: 安排车辆去市区采购物资。' },
+    'COM-605': { title: '通讯记录 - COM-605', content: '通讯ID: COM-605\n日期: 1998-11-22\n类型: 电力报修\n内容: 观测站附近电压不稳，已申请检查。' },
+    'COM-701': { title: '通讯记录 - COM-701', content: '通讯ID: COM-701\n日期: 1998-11-21\n类型: 例行汇报\n内容: 10月观测数据无异常。' }
+    };
+
+      let errorCount = 0;
+      const SHAKE_THRESHOLD = 3;
+      const input = document.getElementById('queryInput');
+      const btn = document.getElementById('searchBtn');
+      const result = document.getElementById('resultArea');
+
+      function displayResult(message, isError = false) {
+        result.innerHTML = '';
+        const p = document.createElement('div');
+        p.className = isError ? 'error' : '';
+        p.innerHTML = message;
+        result.appendChild(p);
+      }
+
+      function showFile(data) {
+        result.innerHTML = '';
+        const header = document.createElement('div');
+        header.className = 'file-header';
+        header.textContent = data.title;
+        result.appendChild(header);
+        const content = document.createElement('div');
+        content.className = 'file-content';
+        content.textContent = data.content;
+        result.appendChild(content);
+        if (data.unlock) {
+          if (data.unlock === 'true_ending') {
+            localStorage.setItem('true_ending_access', 'true');
+          } else {
+            if (window.parent !== window) {
+              window.parent.postMessage({ type: 'unlock', app: data.unlock, token: true }, '*');
+            }
+          }
+        }
+      }
+
+      function search() {
+        const query = input.value.trim().toUpperCase();
+        if (!query) { displayResult('请输入通讯ID。', true); return; }
+        const record = commDB[query];
+        if (record) {
+          showFile(record);
+          errorCount = 0;
+        } else {
+          errorCount++;
+          displayResult('无此记录。', true);
+          // 每次错误都发送计数消息给桌面
+          window.parent.postMessage({ type: 'error_count' }, '*');
+          
+          if (errorCount >= SHAKE_THRESHOLD) {
+            if (window.parent !== window) {
+              window.parent.postMessage({ type: 'horror_effect', effect: 'screenShiver' }, '*');
+            }
+            errorCount = 0;
+          }
+        }
+      }
+
+      btn.addEventListener('click', search);
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') search(); });
+    }
+  </script>
+</body>
+</html>

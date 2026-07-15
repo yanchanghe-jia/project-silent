@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>每日简报</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      background: #c0c0c0;
+      font-family: 'Microsoft Sans Serif', 'VT323', monospace;
+      user-select: none;
+    }
+    .briefing-container {
+      display: flex; flex-direction: column; height: 100%; padding: 8px;
+    }
+    .tab-bar {
+      display: flex; gap: 4px; flex-shrink: 0; margin-bottom: 6px;
+    }
+    .tab {
+      padding: 4px 12px; background: #a0a0a0; border: 2px outset #e0e0e0;
+      font-size: 13px; cursor: pointer; font-weight: bold;
+    }
+    .tab.active {
+      background: #000080; color: white; border-style: inset;
+    }
+    .content-area {
+      flex: 1; overflow-y: auto; background: #fff;
+      border: 2px inset #e0e0e0; padding: 10px;
+      font-size: 14px; line-height: 1.6;
+      position: relative;
+    }
+    .entry {
+      margin-bottom: 15px; border-bottom: 1px dotted #ccc; padding-bottom: 10px;
+      cursor: pointer; display: flex; gap: 10px; align-items: flex-start;
+    }
+    .entry-thumb {
+      width: 80px; height: 60px; background: #eee; border: 1px solid #ccc;
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .entry-thumb img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .entry-text { flex: 1; }
+    .entry-title { font-weight: bold; color: #000080; }
+    .entry-meta { font-size: 12px; color: #666; margin-bottom: 4px; }
+    .entry-content { margin-top: 5px; text-align: justify; }
+    .entry-content p { margin-bottom: 5px; text-indent: 2em; }
+    .entry-content u { text-decoration: underline; }
+    .read-more { font-size: 12px; color: #000080; text-decoration: underline; cursor: pointer; }
+
+    .loading-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: #fff; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 10;
+    }
+    .progress-bar {
+      width: 60%; height: 14px; border: 2px inset #e0e0e0;
+      background: #f0f0f0; margin-bottom: 10px;
+    }
+    .progress-fill {
+      height: 100%; width: 0%; background: #000080;
+      transition: width 0.3s linear;
+    }
+    .loading-text { font-size: 12px; color: #666; }
+
+    /* 备用内部浮层 */
+    .detail-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: #fff; z-index: 20; display: none; flex-direction: column;
+    }
+    .detail-header {
+      background: #000080; color: white; padding: 6px 10px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-shrink: 0;
+    }
+    .detail-header .close-btn {
+      background: #c0c0c0; border: 2px outset #e0e0e0; padding: 2px 8px;
+      font-size: 12px; cursor: pointer; font-weight: bold;
+    }
+    .detail-content {
+      flex: 1; overflow-y: auto; padding: 10px;
+      font-size: 14px; line-height: 1.6;
+    }
+    .detail-image {
+      width: 100%; max-width: 400px; height: auto; margin: 10px auto; display: block;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="briefing-container">
+    <div style="text-align:center; font-weight:bold; margin-bottom:8px;">
+      静湖镇每日简报 —— 1998年12月24日
+    </div>
+    <div class="tab-bar">
+      <div class="tab active" data-tab="news">新闻</div>
+      <div class="tab" data-tab="gov">政务</div>
+      <div class="tab" data-tab="culture">宗教文化</div>
+      <div class="tab" data-tab="travel">文旅</div>
+      <div class="tab" data-tab="system">系统</div>
+    </div>
+    <div class="content-area" id="contentArea">
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="loading-text">正在接收简报数据...</div>
+      </div>
+      <div id="entriesList"></div>
+      <div class="detail-overlay" id="detailOverlay">
+        <div class="detail-header">
+          <span id="detailTitle">详情</span>
+          <button class="close-btn" id="closeDetailBtn">返回简报</button>
+        </div>
+        <div class="detail-content" id="detailContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const contentData = {
+      news: [
+        {
+          title: '暴雪预警：未来三天持续降雪，我镇全面启动应急预案',
+          meta: '静湖日报 · 1998-12-23 · 记者：周文',
+          image: '../assets/images/briefing_snow.png',
+          content: `<p>据市气象台最新预报，受西伯利亚强冷空气与南方暖湿气流交汇影响，静湖镇及周边地区将从12月24日凌晨起迎来持续三天的强降雪，为近十年来最强降雪过程。预计累计积雪深度可达35至45厘米，局部山区可能超过50厘米，最低气温将骤降至零下12摄氏度，并伴有4到5级偏北风。镇政府已启动重大气象灾害应急响应，成立由镇长担任组长的应急指挥中心，统筹协调全镇防灾减灾工作。</p>
+          <p>受暴雪影响，镇内多条主干道已出现积雪和结冰，<u>镇北通往天文观测站的山路已于今晨完全封闭</u>。长途汽车站部分班次临时调整，公共交通末班车提前至17时。镇政府提醒市民减少外出，储备至少三天生活物资。应急物资储备库已准备棉被500床、方便面300箱、矿泉水1000箱，随时可以调拨。</p>`
+        },
+        {
+          title: '供电线路受损：抢修队伍连夜奋战，预计今晚恢复供电',
+          meta: '静湖日报 · 1998-12-24 · 记者：孙立',
+          image: '../assets/images/briefing_powerline.png',
+          content: `<p>昨夜开始的暴雪已导致镇北三条供电线路中断，影响平安街、新华路及天文观测站周边约两百户居民。供电公司派出三支抢修队伍共25人赶赴现场，由于山路积雪深厚，抢修车辆无法直接抵达，队员们携带工具徒步三公里进入故障区域。目前抢修工作正在紧张进行中，预计今晚18时前可恢复大部分区域供电。</p>
+          <p>镇政府在文化中心设立临时取暖点，已接纳三十余名受影响居民，提供热水、方便面及棉被。供电公司表示，<u>此次故障可能与观测站附近的旧线路老化有关</u>，将在雪后进行全面检修。</p>`
+        },
+        {
+          title: '天文观测站封闭维护，官方回应设备异常传闻',
+          meta: '静湖日报 · 1998-12-20 · 记者：孙立',
+          image: '../assets/images/briefing_station_closed.png',
+          content: `<p>镇北天文观测站因建成年代久远，主体建筑及内部设备均出现不同程度老化，镇政府决定于12月20日起对其进行为期三个月的封闭维护。维护范围包括主楼外墙加固、穹顶防水层更换及核心观测设备检修。观测站自11月起已暂停接待游客，夜间观星活动一并取消。</p>
+          <p>近期有居民反映观测站附近夜间出现异常光线和低频噪音，对此观测站负责人称尚不清楚原因，但维护期间将重点排查电路及信号设备。<u>有不愿透露姓名的前员工表示，部分观测数据曾出现无法解释的规律性脉冲图案。</u></p>`
+        },
+        {
+          title: '年终总结会议推迟至明年1月5日举行',
+          meta: '静湖日报 · 1998-12-22',
+          image: '',
+          content: `<p>原定于12月25日举行的镇机关年终总结会议，因暴雪天气推迟至明年1月5日。各部门需提前准备汇报材料，重点总结本年度安全生产、民生保障等方面的工作。警局方面将提交关于未结案件的年度审查报告，据称其中包含对魏明远失踪案的最新评估。镇政府要求所有材料于1月3日前提交。</p>`
+        },
+        {
+          title: '长途汽车站春运期间增加班次，开通电话预约服务',
+          meta: '静湖日报 · 1998-12-21',
+          image: '../assets/images/briefing_bus.png',
+          content: `<p>为应对春运客流高峰，静湖镇长途汽车站将从1月10日起增加至市区及周边县市的班次。新增班次包括：静湖至市区每日4班，静湖至临河镇每日2班，静湖至石门县每日1班。售票窗口已增设至3个，并开通电话预约购票服务（0398-7654321）。请旅客合理安排出行时间，提前购票。</p>`
+        },
+        {
+          title: '1998年大事回顾：天文站研究员失踪案至今未破',
+          meta: '静湖周报 · 1998-12-24 · 记者：郑秋',
+          image: '',
+          content: `<p>1998年即将过去，本报对今年发生的重大事件进行系列回顾。12月24日恰逢天文观测站研究员魏明远失踪案发五周年。1993年12月24日凌晨，魏明远在值夜班期间失踪，现场未发现打斗痕迹，仅遗留一台损坏的无线电对讲机和一本被撕毁的笔记本。警方以意外坠崖结案，但魏明远的家人至今仍在等待真相。<u>该案的关键证物目前仍封存于警局物证室，编号EV-031。</u></p>`
+        },
+        {
+          title: '全国计算机等级考试下月举行，静湖考点报名即将截止',
+          meta: '静湖日报 · 1998-12-19',
+          image: '',
+          content: `<p>1999年第一次全国计算机等级考试将于1月15日至18日举行，静湖镇考点设在镇中学实验楼三楼。报名截止日期为12月31日，请考生携带身份证及两张一寸照片前往镇中学教导处报名。考试内容涵盖计算机基础、文字处理及数据库操作，建议考生提前熟悉DOS命令及打字技能。</p>`
+        },
+        {
+          title: '镇内供暖系统紧急检修，部分区域暂停供暖',
+          meta: '静湖日报 · 1998-12-18',
+          image: '',
+          content: `<p>暴雪将至，镇供热公司提前对镇北区域供暖管道进行紧急检修。12月22日至25日，平安街、新华路及天文观测站周边将暂停供暖。供热公司表示将抢在25日晚上恢复供暖，受影响居民可前往文化中心临时取暖点避寒。</p>`
+        },
+        {
+          title: '警方提示：警惕冒充公职人员诈骗，档案数字化工作不会涉及市民',
+          meta: '静湖日报 · 1998-12-17',
+          image: '',
+          content: `<p>近日有不法分子冒充警局工作人员，以“案件调查”为由索要个人信息及钱财。警方提醒：公安机关不会通过电话要求转账或索取密码。警方同时透露，<u>近期确有部分历史案件的档案在进行数字化整理，以便内部查阅</u>，但这些工作不会涉及普通市民。如接到可疑电话，请立即拨打110核实。</p>`
+        }
+      ],
+      gov: [
+        {
+          title: '创建文明乡镇，人人有责——致全镇居民的一封信',
+          meta: '静湖镇文明办 · 1998-12-15',
+          image: '',
+          content: `<p>为建设整洁、和谐、文明的新静湖，镇政府决定开展“文明乡镇创建月”活动。请广大居民自觉维护公共环境卫生，不随地吐痰，不乱扔垃圾，不在公共场所吸烟。各商铺需在指定区域经营，不得占道。文明办将组织志愿者进行巡查，对违规行为进行劝阻和记录。活动期间，文明办将评选“文明家庭”和“文明商户”，并给予挂牌表彰。希望全镇居民积极参与，共同打造一个宜居、宜游、宜业的美好家园。</p>`
+        },
+        {
+          title: '普法专栏：非法侵入计算机系统的法律后果',
+          meta: '静湖镇司法所 · 1998-12-16',
+          image: '',
+          content: `<p>根据我国现行法律法规，非法侵入他人计算机信息系统、窃取或篡改电子数据均属严重违法行为，可处三年以下有期徒刑或拘役；情节严重者可处三年以上七年以下有期徒刑。任何未经授权的系统访问行为都会被自动记录，并作为法律证据留存。警方特别提醒：<u>近期发现有不法分子通过外部设备非法接入内部网络</u>，此类行为已触犯法律，将受到严厉打击。请广大居民提高网络安全意识，切勿尝试任何未经授权的访问行为。</p>`
+        },
+        {
+          title: '冬季消防安全注意事项',
+          meta: '静湖镇消防队 · 1998-12-14',
+          image: '../assets/images/briefing_fire_safety.png',
+          content: `<p>冬季气候干燥，是火灾高发期。使用电取暖器时请远离易燃物，不得覆盖衣物；定期检查家中的电线线路，老化线路应及时更换；不得在楼道内堆放杂物，保持消防通道畅通。发现火情请立即拨打119，并尽可能使用灭火器进行初期扑救。消防队将在元旦前对全镇进行一次消防安全大检查，重点排查老旧小区和公共场所的消防隐患。对存在严重隐患的单位，将依法责令限期整改。</p>`
+        },
+        {
+          title: '山林防火通告：严禁携带火种进入林区',
+          meta: '静湖镇林业站 · 1998-12-13',
+          image: '',
+          content: `<p>静湖镇北郊山林进入防火戒严期。严禁携带火种进入林区，严禁在林区内吸烟、野炊。护林员已加强巡逻，重点区域包括天文观测站周边山林。发现火情请立即报告镇林业站或拨打119。举报违规用火者，经核实后给予奖励。因生产需要确需在防火区内用火的，必须提前向林业站申请，经批准后方可在指定时间、指定地点用火，并做好充分的防范措施。</p>`
+        },
+        {
+          title: '禁燃烟花爆竹通告',
+          meta: '静湖镇派出所 · 1998-12-12',
+          image: '',
+          content: `<p>元旦及春节将至，根据上级指示，静湖镇镇区范围内全年禁止燃放烟花爆竹。请广大居民自觉遵守，选择电子爆竹等环保方式进行庆祝。派出所将在节日期间加强巡查，对违规燃放行为将依法予以处罚，情节严重者将处以拘留。欢迎广大居民举报违规行为，举报电话：110。</p>`
+        },
+        {
+          title: '计划生育政策宣传',
+          meta: '静湖镇计生办 · 1998-12-11',
+          image: '',
+          content: `<p>计划生育是我国的基本国策。请符合条件的育龄夫妇按时参加孕检，办理生育服务证。独生子女家庭可享受相关政策优惠，包括独生子女保健费、入托入学优先照顾等，具体请咨询镇计生办。晚婚晚育应予以鼓励，符合晚婚晚育条件的夫妇可享受延长婚假、产假等福利。</p>`
+        },
+        {
+          title: '第七届镇民代表大会第二次会议通知',
+          meta: '静湖镇人大 · 1998-12-10',
+          image: '',
+          content: `<p>第七届镇民代表大会第二次会议定于1999年1月10日在镇政府大礼堂召开。会议将审议本年度政府工作报告及下一年度财政预算，并选举产生新一届镇人大主席团成员。各选区代表请于1月5日前将提案提交至镇人大办公室。提案内容包括但不限于民生保障、基础设施建设、环境保护等方面。会议期间将设立旁听席，欢迎居民报名参加。</p>`
+        }
+      ],
+      culture: [
+        {
+          title: '静湖寺祈福法会通告',
+          meta: '静湖寺 · 1998-12-20',
+          image: '../assets/images/briefing_temple.png',
+          content: `<p>农历腊月初八（公历1999年1月5日），静湖寺将举行一年一度的祈福法会。届时由住持慧明法师主法，为全镇居民祈求平安吉祥。法会内容包括诵经、放生及施粥。放生活动将在静湖边举行，欢迎信众自带放生物命。寺内提供免费斋饭，参与者请提前半小时到场，保持安静，尊重佛教礼仪。法会结束后，慧明法师将现场解答信众关于佛法修行的疑问。</p>`
+        },
+        {
+          title: '佛学小知识：《金刚经》选读',
+          meta: '静湖寺文化部 · 1998-12-18',
+          image: '',
+          content: `<p>《金刚般若波罗蜜经》云：“凡所有相，皆是虚妄。若见诸相非相，则见如来。”慧明法师开示：世人所见，未必真实。执着于所见，反为其所困。一切现象皆由因缘和合而生，本质是空。若能不被表象迷惑，直探事物本质，方能获得真正的智慧。在日常生活中，我们应当时常反观自心，不被外境的起伏所动摇。</p>`
+        },
+        {
+          title: '镇志记载：山中石刻巨眼的传说与考证',
+          meta: '静湖镇文化站 · 1998-12-15 · 整理人：吴志远',
+          image: '../assets/images/briefing_stone_eye.png',
+          content: `<p>据清光绪年间编纂的《静湖镇志》记载，同治七年（1868年）冬，有猎户在镇北深山中偶然发现一块巨大的花岗岩石，石面平滑如镜，上刻有一只栩栩如生的巨大眼睛图案。该石刻约两米见方，瞳孔处为一凹陷的圆形孔洞，边缘有放射状刻痕，似曾镶嵌某种物品。当地村民称之为“天眼石”，认为此石是神灵的化身，每逢初一、十五均有村民前往祭拜，祈求平安。</p>
+          <p>民国初年（约1912年），一场大规模的泥石流将该区域掩埋，“天眼石”从此下落不明。建国后，曾有考古队根据镇志记载入山寻找，但因地形变化太大，始终未能找到确切位置。<u>近年来，有学者提出假设，认为该石刻可能与更古老的未知文明有关，其图案风格与我国已知的任何古代石刻均不相同。</u></p>`
+        },
+        {
+          title: '清代天文异象记录',
+          meta: '静湖镇文化站 · 1998-12-14',
+          image: '',
+          content: `<p>据《静湖县志》记载，清乾隆五十五年（1790年）冬，镇北上空曾出现“赤色大星，状如人眼，持续数夜不散”。当地乡绅认为是祥瑞之兆，曾上报朝廷。后此异象突然消失，无人能解。<u>有趣的是，这段记录中的描述与近年一些目击报告有惊人相似之处。</u>有学者怀疑，此异象可能与某种未知的天文现象或大气光学效应有关，但至今缺乏确凿的科学解释。</p>`
+        },
+        {
+          title: '农历节气提醒：冬至',
+          meta: '静湖镇文化站 · 1998-12-22',
+          image: '',
+          content: `<p>冬至（12月22日）已至，这是北半球白昼最短、黑夜最长的一天。民间素有“冬至大如年”的说法，当地习俗包括吃饺子、祭祖、泡足浴等。冬至过后，白天将逐渐变长，阳气开始回升。俗语云：“冬至一阳生”，从这一天起，万物开始复苏。在中医养生理论中，冬至是进补的最佳时节，可适当食用羊肉、枸杞、桂圆等温补食物。</p>`
+        },
+        {
+          title: '白云观清修活动通知',
+          meta: '白云观 · 1998-12-19',
+          image: '',
+          content: `<p>镇东白云观将于12月28日至1月3日举办为期七天的道家清修活动，内容包括打坐、太极、道家养生功法等。本次活动由张道长主持，限额20人，费用随喜。参与者需提前报名，并遵守道观清规：活动期间全程止语，手机需关机，每日清晨5时起床随道长早课。请自备宽松衣物及洗漱用品。报名请联系白云观道务处。</p>`
+        }
+      ],
+      travel: [
+        {
+          title: '静湖镇旅游指南：古镇风情',
+          meta: '静湖镇旅游办公室 · 1998-12-10',
+          image: '../assets/images/briefing_old_street.png',
+          content: `<p>静湖镇始建于清乾隆年间，因镇中心一处清澈如镜的天然湖泊而得名。自古以来便是晋商通往京城的必经驿站，商贾云集，繁华一时。如今漫步在青石板铺就的老街巷中，仍能感受到浓厚的历史气息。古镇核心区保存完好的清代建筑共有二十余处，其中最值得游览的有张家大院、老戏台、钟楼和城隍庙。</p>
+          <p>张家大院建于乾隆四十年（1775年），是当时晋商大户张氏家族的宅邸。整座建筑为四进四合院布局，占地约两千平方米，共有房屋六十余间。院内砖雕、木雕、石雕精美绝伦，尤以正门照壁上的“麒麟献瑞”砖雕最为珍贵。现大院已被辟为静湖镇民俗博物馆，馆内陈列有清代家具、农具、契约文书等珍贵文物。</p>
+          <p>位于东街的老戏台建于嘉庆年间，是静湖镇现存最古老的公共建筑。戏台为木结构，飞檐斗拱，雕梁画栋，虽历经百年风雨，仍保存完好。每年正月初一至十五，戏台上仍有社戏演出，是当地最具特色的民俗活动之一。</p>
+          <p>推荐游览路线：从镇中心的钟楼出发，沿北街步行至张家大院（约15分钟），游览约1小时；然后转至东街的老戏台（约10分钟），最后前往城隍庙。全程约需3小时。游客可在老街的茶馆歇脚，品尝当地特色茶点。</p>`
+        },
+        {
+          title: '静湖镇旅游指南：天文观测站与星空之旅',
+          meta: '静湖镇旅游办公室 · 1998-12-10',
+          image: '',
+          content: `<p>位于镇北山腰的天文观测站，是静湖镇最为独特的旅游资源。该观测站建于1985年，由省科学院投资兴建，主楼为白色圆顶建筑，远远望去如同一颗巨大的明珠镶嵌在群山之间。观测站内设有一台口径60厘米的反射望远镜，是当时省内最大的天文观测设备之一。</p>
+          <p>自1986年起，观测站定期在秋冬季节举办夜间观星活动。在晴朗无月的夜晚，游客可在工作人员的指导下，通过望远镜观测月球表面的环形山、土星的美丽光环、木星的伽利略卫星等壮丽天体。许多天文爱好者不远千里而来，只为在这片远离城市光污染的山中仰望星空。</p>
+          <p><u>观测站的游客留言簿上，有多位游客留下了令人不安的记录。一位署名“老张”的游客写道：“昨晚在这里看星星的时候，总觉得有东西在看回来。不是星星，是别的什么。”另一条留言则提到：“望远镜里看到的不止是星星，还有一个巨大的……眼睛？”</u>这些留言引起了天文爱好者的广泛讨论。</p>
+          <p>目前观测站因设备维护暂停对外开放，恢复时间未知。请游客留意后续通知。</p>`
+        },
+        {
+          title: '静湖特产推荐',
+          meta: '静湖镇旅游办公室 · 1998-12-12',
+          image: '',
+          content: `<p>来到静湖镇，不可错过的当地特产包括：手工红薯粉，采用传统工艺制作，以本地产优质红薯为原料，经磨浆、过滤、沉淀、蒸制、晾晒等多道工序精制而成，口感Q弹爽滑，可凉拌、炖汤或涮火锅，是静湖人冬季餐桌上必备的食材。山核桃，产自镇北深山，因昼夜温差大，核桃生长缓慢，壳薄肉厚，油脂丰富，是冬季滋补佳品。此外还有土蜂蜜、野生蘑菇干等山货。推荐在老街的“赵记山货铺”购买，价格实惠，品质有保证。每年入冬后，还有限量供应的手工腊肉，选用本地土猪肉，经腌制、风干、熏制而成，是本地人过年必备的美味。</p>`
+        },
+        {
+          title: '静湖镇自然风光：冬季温泉',
+          meta: '静湖镇旅游办公室 · 1998-12-11',
+          image: '../assets/images/briefing_hotspring.png',
+          content: `<p>除了人文景观，静湖镇的自然风光同样引人入胜。镇西约五公里处有一处天然温泉，名曰“暖泉”，水温常年保持在40℃左右，富含硫、钙、镁等多种矿物质，对关节炎、皮肤病及神经衰弱有一定疗效。冬季泡温泉更是当地一大享受。大雪封山之际，泡在热气蒸腾的温泉中，看雪花飘落，是静湖镇独有的冬日浪漫。</p>
+          <p>暖泉旁建有简易的温泉旅馆，提供住宿和餐饮服务。旅馆共有客房20间，均配有独立温泉泡池。餐厅供应本地农家菜，推荐菜品包括土鸡炖蘑菇、红烧野兔、清炒山蕨菜等。前往暖泉的路况受暴雪影响较大，请提前致电旅馆（0398-7654111）确认路况及房间情况。</p>`
+        },
+        {
+          title: '清代古建筑群游览路线推荐',
+          meta: '静湖镇旅游办公室 · 1998-12-13',
+          image: '',
+          content: `<p>静湖镇现存清代古建筑二十余处，最具代表性的包括张家大院、老戏台、钟楼和城隍庙。建议游客购买套票（50元），可在两天内游览全部景点。导游服务需提前一天预约，费用为30元每次。学生及老年人凭有效证件可享受半价优惠。景区开放时间为每日8:00至17:00，冬季调整为8:30至16:30。请游客合理安排游览时间。</p>`
+        },
+        {
+          title: '静湖镇民宿推广：山水人家',
+          meta: '静湖镇旅游办公室 · 1998-12-14',
+          image: '../assets/images/briefing_guesthouse.png',
+          content: `<p>为促进旅游发展，镇政府鼓励居民开办民宿。“山水人家”是首批获得认证的民宿之一，位于镇北山脚下，距天文观测站约两公里。民宿由一栋清代老宅改建，保留了原有的木结构和青砖灰瓦，每间客房均配有火炕，冬季温暖舒适。老板娘王婶做的土鸡炖蘑菇远近闻名，使用的蘑菇是自家在山上采摘的野生榛蘑。住宿价格为每晚50-80元，含早餐。预订电话：0398-1234567。</p>`
+        }
+      ],
+      system: [
+        {
+          title: '系统维护通知',
+          meta: '系统管理员 · 1998-12-24',
+          image: '',
+          content: `<p>因外部信号波动，近期系统可能出现短暂异常，包括但不限于：时间显示错误、日期格式混乱、文件读取失败、内存页面错误等。此为正常现象，不影响数据安全。如遇持续异常，请记录错误代码并联系管理员。常见错误代码：0x000000F0（内存读取异常，请重启终端）、0x000000A1（外部设备连接请求，请检查外设）、0x000000BE（数据校验失败，部分文件可能损坏）。维护期间，部分历史档案的访问可能受到限制，敬请谅解。</p>`
+        },
+        {
+          title: '■■■ 信号中断 ■■■',
+          meta: '来源未知 · 时间戳错误',
+          image: '',
+          content: `<p style="color:#660000;"><u>你已进入观测范围。外部连接已建立。请勿关闭终端。祂在看着你。祂一直都在看着你。</u></p>`
+        }
+      ]
+    };
+
+    // 加载进度模拟
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const progressFill = document.getElementById('progressFill');
+    let percent = 0;
+    const loadingInterval = setInterval(() => {
+      percent += Math.random() * 15 + 5;
+      if (percent >= 100) {
+        percent = 100;
+        clearInterval(loadingInterval);
+        setTimeout(() => { loadingOverlay.style.display = 'none'; }, 200);
+      }
+      progressFill.style.width = percent + '%';
+    }, 300);
+
+    // 标签切换
+    const tabs = document.querySelectorAll('.tab');
+    const entriesList = document.getElementById('entriesList');
+    const detailOverlay = document.getElementById('detailOverlay');
+    const detailTitle = document.getElementById('detailTitle');
+    const detailContent = document.getElementById('detailContent');
+    const closeDetailBtn = document.getElementById('closeDetailBtn');
+
+    let currentTab = 'news';
+
+    function renderTab(tabName) {
+      currentTab = tabName;
+      const entries = contentData[tabName] || [];
+      entriesList.innerHTML = '';
+      entries.forEach((entry, index) => {
+        const entryDiv = document.createElement('div');
+        entryDiv.className = 'entry';
+        let thumbHtml = '';
+        if (entry.image) {
+          thumbHtml = `<div class="entry-thumb"><img src="${entry.image}" alt="配图" onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px;\\'>无图</div>'"></div>`;
+        } else {
+          thumbHtml = `<div class="entry-thumb" style="background:#eee; color:#999; font-size:10px;">无图</div>`;
+        }
+        entryDiv.innerHTML = `
+          ${thumbHtml}
+          <div class="entry-text">
+            <div class="entry-title">${entry.title}</div>
+            <div class="entry-meta">${entry.meta}</div>
+            <div class="entry-content">${entry.content.substring(0, 200)}...</div>
+            <span class="read-more" data-index="${index}">[阅读全文]</span>
+          </div>
+        `;
+        entriesList.appendChild(entryDiv);
+      });
+
+      document.querySelectorAll('.read-more').forEach(span => {
+        span.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const idx = parseInt(span.dataset.index);
+          const entry = contentData[currentTab][idx];
+          showDetail(entry);
+        });
+      });
+    }
+
+    function showDetail(entry) {
+      // 优先尝试通过父窗口打开新窗口
+      if (window.parent && window.parent !== window) {
+        const payload = {
+          type: 'open_briefing_detail',
+          title: entry.title,
+          meta: entry.meta,
+          image: entry.image || null,
+          content: entry.content
+        };
+        window.parent.postMessage(payload, '*');
+      } else {
+        // 备用：使用内部浮层
+        detailTitle.textContent = entry.title;
+        let detailHtml = `<div class="entry-meta">${entry.meta}</div>`;
+        if (entry.image) {
+          detailHtml += `<img src="${entry.image}" class="detail-image" alt="配图" onerror="this.style.display='none'">`;
+        }
+        detailHtml += `<div class="entry-content">${entry.content}</div>`;
+        detailContent.innerHTML = detailHtml;
+        detailOverlay.style.display = 'flex';
+      }
+    }
+
+    closeDetailBtn.addEventListener('click', () => {
+      detailOverlay.style.display = 'none';
+    });
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const tabName = tab.dataset.tab;
+        renderTab(tabName);
+      });
+    });
+
+    renderTab('news');
+  </script>
+</body>
+</html>

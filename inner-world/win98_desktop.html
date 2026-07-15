@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PROJECT SILENT – 1998</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+
+    html.fade-in, body.fade-in { opacity: 0; transition: opacity 0.8s ease-out; }
+    html.fade-in.visible, body.fade-in.visible { opacity: 1; }
+
+    body {
+      background: #1a2b2b;
+      font-family: 'Courier New', 'Microsoft Sans Serif', monospace;
+      height: 100vh; overflow: hidden;
+      image-rendering: pixelated;
+      filter: blur(0.4px) contrast(0.95);
+      position: relative;
+    }
+
+    body::after {
+      content: "";
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.06) 0px, rgba(255,255,255,0.03) 2px, transparent 3px);
+      pointer-events: none; z-index: 9999;
+    }
+    body::before {
+      content: "";
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4"><rect width="4" height="4" fill="none"/><rect width="1" height="1" fill="rgba(255,255,255,0.03)" x="0" y="0"/><rect width="1" height="1" fill="rgba(0,0,0,0.05)" x="2" y="1"/><rect width="1" height="1" fill="rgba(255,255,255,0.02)" x="3" y="2"/></svg>');
+      background-repeat: repeat;
+      pointer-events: none; z-index: 9998; opacity: 0.8;
+    }
+
+    @keyframes screenShiver { 0% { transform: translate(0,0); } 25% { transform: translate(1px,-1px); } 50% { transform: translate(-1px,0); } 75% { transform: translate(0,1px); } 100% { transform: translate(0,0); } }
+    body.shivering { animation: screenShiver 0.08s infinite; }
+
+    @keyframes dateShake { 0% { transform: translate(0,0); } 20% { transform: translate(-2px,1px); } 40% { transform: translate(2px,-1px); } 60% { transform: translate(-1px,-2px); } 80% { transform: translate(1px,1px); } 100% { transform: translate(0,0); } }
+    .date-shaking { animation: dateShake 0.15s infinite; display: inline-block; }
+
+    .desktop { position: relative; width: 100%; height: calc(100% - 48px); padding: 20px; display: flex; flex-direction: column; flex-wrap: wrap; gap: 20px; align-content: flex-start; cursor: default; }
+    .desktop-icon { width: 80px; text-align: center; color: #c8c8c8; font-size: 11px; font-family: 'VT323', monospace; padding: 4px; border: 1px solid transparent; cursor: pointer; word-wrap: break-word; line-height: 1.3; }
+    .desktop-icon:hover { background: rgba(120,140,180,0.25); }
+    .desktop-icon.selected { border: 1px dotted #e0e0e0; background: rgba(160,180,220,0.4); }
+    .desktop-icon .icon-img { width: 48px; height: 48px; margin: 0 auto 4px; background: #3a4a5a; border: 2px outset #6a7a8a; display: flex; align-items: center; justify-content: center; font-size: 28px; color: #c0d0e0; }
+
+    .taskbar { position: fixed; bottom: 0; left: 0; width: 100%; height: 48px; background: #c0c0c0; border-top: 2px solid #ffffff; box-shadow: inset 0 1px 0 #808080; display: flex; align-items: center; padding: 0 4px; z-index: 9997; }
+    .start-button { display: flex; align-items: center; gap: 6px; padding: 2px 10px; height: 32px; background: #c0c0c0; border: 2px outset #e0e0e0; font-family: 'Press Start 2P', 'VT323', monospace; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; cursor: pointer; }
+    .start-button:active { border-style: inset; }
+    .taskbar-divider { width: 2px; height: 32px; background: #808080; margin: 0 4px; box-shadow: 1px 0 0 #fff; }
+    .taskbar-tabs { flex: 1; display: flex; align-items: center; gap: 4px; overflow-x: auto; height: 100%; }
+    .taskbar-tab { height: 32px; padding: 0 12px; background: #c0c0c0; border: 2px outset #e0e0e0; font-size: 11px; font-family: 'VT323', monospace; white-space: nowrap; cursor: pointer; line-height: 28px; }
+    .taskbar-tab.active { border-style: inset; background: #a0a0a0; }
+
+    .system-tray { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding: 0 8px; height: 40px; border: 2px inset #e0e0e0; font-size: 11px; background: #c0c0c0; font-family: 'VT323', monospace; cursor: pointer; line-height: 1.3; }
+    .clock-time { font-family: 'Press Start 2P', 'VT323', monospace; font-size: 13px; letter-spacing: 1px; color: #000; }
+    .clock-date { font-family: 'VT323', monospace; font-size: 13px; color: #222; font-weight: bold; }
+
+    .start-menu { position: fixed; bottom: 52px; left: 4px; width: 220px; background: #c0c0c0; border: 2px outset #e0e0e0; box-shadow: 2px 2px 0 #808080; z-index: 10000; display: none; flex-direction: column; padding: 2px; }
+    .start-menu.visible { display: flex; }
+    .start-menu-item { padding: 8px 16px; font-size: 12px; font-family: 'VT323', monospace; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .start-menu-item:hover { background: #000080; color: white; }
+    .start-menu-separator { height: 2px; background: #808080; margin: 2px 0; box-shadow: 0 1px 0 #fff; }
+
+    .window { position: absolute; background: #c0c0c0; border: 2px outset #e0e0e0; min-width: 280px; min-height: 200px; box-shadow: 2px 2px 0 #404040; display: flex; flex-direction: column; z-index: 100; resize: both; overflow: auto; }
+    .window.focused { z-index: 200; }
+    .title-bar { display: flex; align-items: center; background: #000080; color: white; padding: 2px 3px; font-size: 12px; font-family: 'VT323', monospace; font-weight: bold; cursor: move; }
+    .window:not(.focused) .title-bar { background: #808080; }
+    .title-bar-text { flex: 1; margin-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .title-bar-buttons { display: flex; gap: 2px; }
+    .title-btn { width: 20px; height: 20px; background: #c0c0c0; border: 2px outset #e0e0e0; font-size: 10px; line-height: 16px; text-align: center; cursor: pointer; color: black; font-weight: bold; }
+    .title-btn:active { border-style: inset; }
+    .title-btn.close:hover { background: #ff4040; color: white; }
+    .window-content { flex: 1; padding: 10px; font-size: 12px; font-family: 'VT323', monospace; background: #f0f0f0; border: 2px inset #e0e0e0; margin: 4px; overflow: auto; color: #101010; line-height: 1.6; }
+
+    .datetime-popup { position: fixed; right: 4px; bottom: 52px; width: 200px; background: #c0c0c0; border: 2px outset #ffffff; box-shadow: 3px 3px 0 #404040; z-index: 10002; display: none; flex-direction: column; font-family: 'VT323', monospace; }
+    .datetime-popup .title-bar { background: #000080; padding: 2px 4px; display: flex; justify-content: space-between; align-items: center; color: white; font-size: 11px; cursor: move; }
+    .datetime-popup .popup-content { padding: 8px; display: flex; gap: 6px; align-items: center; background: #c0c0c0; }
+    .datetime-popup .clock-canvas { width: 70px; height: 70px; image-rendering: pixelated; border: 2px inset #e0e0e0; background: #f0f0f0; }
+    .datetime-popup .date-info { font-size: 13px; line-height: 1.5; background: #f0f0f0; border: 2px inset #e0e0e0; padding: 4px 6px; flex: 1; min-width: 0; word-break: break-all; }
+
+    @keyframes textGlitch { 0% { opacity:1; transform:none; } 20% { opacity:0.7; transform: translate(2px,0); } 40% { opacity:1; transform:translate(-2px,0); } 60% { opacity:0.8; transform:translate(0,-1px); } 80% { opacity:1; transform:none; } }
+    .glitch-text { animation: textGlitch 0.2s infinite; display: inline-block; }
+
+    .hidden-popup { position: fixed; top: 30%; left: 30%; background: #c0c0c0; border: 2px outset red; z-index: 10001; padding: 20px; color: red; font-family: 'VT323', monospace; display: none; }
+
+    .anti-debug-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100000; display: none; align-items: center; justify-content: center; flex-direction: column; color: #cc0000; font-family: 'VT323', monospace; text-align: center; pointer-events: all; overflow: hidden; }
+    .anti-debug-overlay .scanlines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(0deg, rgba(255,0,0,0.04) 0px, rgba(0,0,0,0.15) 2px, transparent 4px); pointer-events: none; }
+    .anti-debug-overlay .glitch-box { position: relative; z-index: 2; max-width: 600px; padding: 20px; }
+    .anti-debug-overlay .eye-art { font-size: 12px; line-height: 1.1; color: #fff; background: #000; display: inline-block; margin-bottom: 20px; white-space: pre; font-family: 'Courier New', monospace; letter-spacing: 0px; animation: eyeFlicker 0.3s infinite, eyeShake 0.08s infinite; }
+    @keyframes eyeFlicker { 0%, 100% { opacity: 1; } 30% { opacity: 0.6; } 60% { opacity: 0.9; } }
+    @keyframes eyeShake { 0% { transform: translate(0,0); } 25% { transform: translate(-1px,1px); } 50% { transform: translate(1px,-1px); } 75% { transform: translate(-1px,-1px); } 100% { transform: translate(1px,1px); } }
+    .anti-debug-overlay .title { font-size: 22px; letter-spacing: 4px; color: #ff0000; text-shadow: 3px 3px 0 #600, -2px -2px 0 #300; margin-bottom: 25px; animation: titlePulse 2s infinite; }
+    @keyframes titlePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+    .anti-debug-overlay .disconnect-btn { padding: 8px 25px; font-family: 'VT323', monospace; font-size: 20px; color: #ff0000; background: #000; border: 2px solid #aa0000; cursor: pointer; letter-spacing: 3px; box-shadow: 0 0 8px rgba(255,0,0,0.4); transition: all 0.2s; }
+    @keyframes overlayIn { 0% { opacity: 0; } 10% { opacity: 1; background: #200; } 20% { opacity: 0.9; background: #000; } 30% { opacity: 1; } 100% { opacity: 1; } }
+    .anti-debug-overlay.active-in { animation: overlayIn 0.4s ease-out; }
+    @keyframes overlayOut { 0% { opacity: 1; transform: scale(1); filter: blur(0); } 50% { opacity: 0.7; transform: scale(1.02); filter: blur(1px); } 100% { opacity: 0; transform: scale(0.98); filter: blur(2px); } }
+    .anti-debug-overlay.active-out { animation: overlayOut 0.8s forwards; }
+  </style>
+</head>
+<body class="fade-in" id="mainBody">
+
+  <!-- 音频元素 -->
+  <audio id="bgmInner" loop>
+    <source src="../assets/audio/inner_world_ambient.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="sfxTick" src="../assets/audio/clock_tick.mp3"></audio>
+  <audio id="sfxGlitch" src="../assets/audio/glitch_short.mp3"></audio>
+  <audio id="sfxAntiDebug" src="../assets/audio/anti_debug_warning.mp3"></audio>
+  <audio id="sfxHorror" src="../assets/audio/horror_sting.mp3"></audio>
+
+  <!-- 桌面图标 -->
+  <div class="desktop" id="desktop">
+    <div class="desktop-icon" ondblclick="openWindow('我的电脑', '', 'mycomputer')"><div class="icon-img">🖥️</div><div>我的电脑</div></div>
+    <div class="desktop-icon" ondblclick="openWindow('回收站', '', 'trash')"><div class="icon-img">🗑️</div><div>回收站</div></div>
+    <div class="desktop-icon" ondblclick="openWindow('日记', 'app_diary.html', 'diary', '500px', '400px')"><div class="icon-img">📓</div><div>日记</div></div>
+    <div class="desktop-icon" ondblclick="openWindow('系统信息', '', 'sysinfo')"><div class="icon-img">⚙️</div><div>系统信息</div></div>
+    <div class="desktop-icon" ondblclick="openWindow('案宗索引', 'app_cases.html', 'cases', '700px', '500px')"><div class="icon-img">📁</div><div>案宗索引</div></div>
+    <div class="desktop-icon" ondblclick="openWindow('人员档案', 'app_personnel.html', 'personnel', '700px', '500px')"><div class="icon-img">👤</div><div>人员档案</div></div>
+    <div class="desktop-icon" ondblclick="openWindow('物证追踪', 'app_evidence.html', 'evidence', '700px', '500px')"><div class="icon-img">🔍</div><div>物证追踪</div></div>
+    <div class="desktop-icon" ondblclick="openWindow('通讯记录', 'app_comm.html', 'comm', '750px', '520px')"><div class="icon-img">📞</div><div>通讯记录</div></div>
+    <div class="desktop-icon" ondblclick="openWindow('坐标定位', 'app_geo.html', 'geo', '700px', '500px')"><div class="icon-img">🌍</div><div>坐标定位</div></div>
+    <div class="desktop-icon" ondblclick="openWindow('每日简报', 'daily_briefing.html', 'briefing', '700px', '600px')"><div class="icon-img">📰</div><div>每日简报</div></div>
+    <div class="desktop-icon" ondblclick="openWindow('员工名册', 'app_directory.html', 'directory', '650px', '500px')"><div class="icon-img">📇</div><div>员工名册</div></div>
+    <div class="desktop-icon" ondblclick="openWindow('内部备忘录', 'app_memos.html', 'memos', '650px', '550px')"><div class="icon-img">📋</div><div>内部备忘录</div></div>
+    <div class="desktop-icon" ondblclick="openWindow('值班日志', 'app_duty_log.html', 'dutylog', '600px', '500px')"><div class="icon-img">📘</div><div>值班日志</div></div>
+  </div>
+
+  <!-- 任务栏 -->
+  <div class="taskbar">
+    <div class="start-button" id="startButton"><span>▣</span> 开始</div>
+    <div class="taskbar-divider"></div>
+    <div class="taskbar-tabs" id="taskbarTabs"></div>
+    <div class="taskbar-divider" style="margin-left:auto;"></div>
+    <div class="system-tray" id="systemTray">
+      <span class="clock-time" id="clockTimeDisplay">02:33</span>
+      <span class="clock-date" id="clockDateDisplay">1998-12-24</span>
+    </div>
+  </div>
+
+  <!-- 开始菜单 -->
+  <div class="start-menu" id="startMenu">
+    <div class="start-menu-item" data-open="mycomputer">🖥️ 我的电脑</div>
+    <div class="start-menu-item" data-open="diary">📓 日记</div>
+    <div class="start-menu-item" data-open="briefing">📰 每日简报</div>
+    <div class="start-menu-item" data-open="cases">📁 案宗索引</div>
+    <div class="start-menu-separator"></div>
+    <div class="start-menu-item" data-open="personnel">👤 人员档案</div>
+    <div class="start-menu-item" data-open="evidence">🔍 物证追踪</div>
+    <div class="start-menu-item" data-open="comm">📞 通讯记录</div>
+    <div class="start-menu-item" data-open="geo">🌍 坐标定位</div>
+    <div class="start-menu-separator"></div>
+    <div class="start-menu-item" data-open="directory">📇 员工名册</div>
+    <div class="start-menu-item" data-open="memos">📋 内部备忘录</div>
+    <div class="start-menu-item" data-open="dutylog">📘 值班日志</div>
+  </div>
+
+  <!-- 日期/时间弹出面板 -->
+  <div class="datetime-popup" id="datetimePopup">
+    <div class="title-bar" id="popupTitleBar"><span>日期/时间</span><span class="title-btn close" onclick="closeDateTimePopup()">✕</span></div>
+    <div class="popup-content">
+      <canvas class="clock-canvas" id="popupClockCanvas" width="70" height="70"></canvas>
+      <div class="date-info" id="popupDateInfo"></div>
+    </div>
+  </div>
+
+  <!-- 隐藏弹窗 -->
+  <div class="hidden-popup" id="hiddenPopup">
+    <div style="font-size:22px;">⚠ 异常进程</div>
+    <div id="hiddenPopupMsg"></div>
+    <button onclick="document.getElementById('hiddenPopup').style.display='none'">确定</button>
+  </div>
+
+  <!-- 反窥探遮罩 -->
+  <div class="anti-debug-overlay" id="antiDebugOverlay">
+    <div class="scanlines"></div>
+    <div class="glitch-box">
+      <pre class="eye-art" id="eyeAsciiArt">
+%##:---:-=-++====+++++==--::::::. .                 ..   ::. ::::--===++
+#+:.:-==**#%%@@@@@@@@@%%%###*+==::::.:                . . .:.::.::--==++
++::=+*%@@@@@@@@@@@@@@@@%%%#####***+++=--:.:.       .  .:.:..:::::::--=++
+=-=*%@@@@@@@@@@@@@@@@@%%%###***+++++=+====------:::::::.::-::::::---===+
+++*%@@@@@@@@@@@@@@%%%###**++===----:-::::::------=-=-==-=-==-==-=====+++
+*#%@@@@@@@@@@@%%%#**++=----===*=:===-:::      :---======+==++=+++*+***##
+#%@@@@@@@@%%%##*+-:.:=%@@@@@%**+   :. ::::..      :==+++=+++++****###%%%
+%%@@@@%@%%#**+=: -%*=+-==                           .+++++++=++***##%@@@
+@%%@%%@%##+-:  -###+:.                                 ==+=+=+++*##%@@@@
+%@%%%%%#*+=- -:        :==   +=--           .            --==-==**%%%@@@
+%@%%%##+=:  +#+:    -*%@%: :@@*#        .    :..          .::---+*#%@@@@
+%%%%##+-:  .      =*%@@@@.:@@@@-        ::   ::.:..         :::--*#%%@@@
+%%%##*=-        :*@@@@@@@: ::.         --=   .:..:::.   .::  :--=*#%@@@@
+%###*+=:     .-:*@@@@@@@@=.-::        -==-   ::::::::     ===-=+*%%@@@@@
+%##**+--:.=+*+++#@@@@@@@@@-.::- --:--=--:.  :::.::-:.     :-*###%@@@@@@@
+%%##*++==--::-=*#%@@@@@@@@@= .: -.==.=-:. .--:-::::::..::-=+**#%@@@@@@@@
+@%%%%##**+*++==---+%%@@@@@@@@=. . -: .  :==-=++*++=--:::-=++**#%@@@@@@@@
+@@@%@%%%%%*#*#*#+*=**-+*#@@@@@@%#===++*+##+++=--.:.. ..:.:--=*%@@@@@@@@@
+@@@@@@%@%%@%%##%##*#**%=-*%==#*%+-**+-+==::.:::          .:=*%@@@@@@@@@@
+@@@@@@@@@@%@@%@%##%#%-**#+###+*-*++=.--::::.. .       :::-=*#@@@@@@@@@@@
+@@@@@@@@@@@@@@@%@@@%*#%###*#+#*+*+=+----::::.      ::---=+*%%@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@%@@@%%#%*##*##**++---:.   .--=====++*#%@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@%%%##*++=-:::-==+=+=+++++**%%@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@%%###*#####*#***********+**##%%@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%%%%%%%#%#*#**#***#%%%@@@@@@@@@@@@@@@@@@@
+      </pre>
+      <div class="title">不要试图直视祂的眼睛</div>
+      <button class="disconnect-btn" id="disconnectBtn">我已知晓</button>
+    </div>
+  </div>
+
+  <script>
+    // ==================== 页面淡入 ====================
+    document.addEventListener('DOMContentLoaded', function() {
+      document.body.classList.add('visible');
+    });
+
+    // ==================== 音频控制 ====================
+    var bgmInner = document.getElementById('bgmInner');
+    var sfxTick = document.getElementById('sfxTick');
+    var sfxGlitch = document.getElementById('sfxGlitch');
+    var sfxAntiDebug = document.getElementById('sfxAntiDebug');
+    var sfxHorror = document.getElementById('sfxHorror');
+
+    document.addEventListener('click', function initInnerAudio() {
+      if (bgmInner.paused) {
+        bgmInner.volume = 0.4;
+        bgmInner.play().catch(function() {});
+      }
+      document.removeEventListener('click', initInnerAudio);
+    }, { once: true });
+
+    setInterval(function() {
+      if (!bgmInner.paused) {
+        sfxTick.currentTime = 0;
+        sfxTick.volume = 0.2;
+        sfxTick.play().catch(function() {});
+      }
+    }, 5000);
+
+    // ==================== 恐怖效果概率 ====================
+    var HORROR_PROB = {
+      dateCorrupt: 0.25,
+      hiddenPopup: 0.05,
+      screenShiver: 0.2,
+      textGlitch: 0.4,
+      timeGlitch: 0.0005
+    };
+
+    var syncedDate = { text: '1998-12-24', isCorrupted: false };
+    var clockCorrupted = false;
+
+    // ==================== 全局计数器（每次进入里世界重置） ====================
+    var MAX_GLOBAL_ERRORS = 15;
+    var MAX_GAZE_COUNT = 3;
+    var globalErrors = 0;
+    var gazeCount = 0;
+
+    // 清空旧数据，保证每次进入游戏都是干净状态
+    localStorage.removeItem('global_errors');
+    localStorage.removeItem('gaze_count');
+
+    // 清空所有应用访问令牌
+    var resetKeys = ['personnel_access', 'evidence_access', 'comm_access', 'geo_access', 'true_ending_access'];
+    resetKeys.forEach(function(key) {
+      localStorage.removeItem(key);
+    });
+
+    // 累加全局错误次数
+    function incrementGlobalErrors() {
+      globalErrors++;
+      localStorage.setItem('global_errors', globalErrors);
+      if (globalErrors >= MAX_GLOBAL_ERRORS) {
+        triggerEnding('selfdestruct');
+      }
+    }
+
+    // 累加反窥探次数
+    function incrementGaze() {
+      gazeCount++;
+      localStorage.setItem('gaze_count', gazeCount);
+      if (gazeCount >= MAX_GAZE_COUNT) {
+        triggerEnding('gaze');
+      }
+    }
+
+    // ==================== 窗口管理 ====================
+    var windowZIndex = 100;
+    var openWindows = {};
+    var focusedWindowId = null;
+
+    function openWindow(title, url, appId, customWidth, customHeight, customContent) {
+      if (openWindows[appId] && !openWindows[appId].minimized) { focusWindow(appId); return; }
+      if (openWindows[appId] && openWindows[appId].minimized) { restoreWindow(appId); return; }
+
+      var winWidth = customWidth || '600px';
+      var winHeight = customHeight || '400px';
+
+      var win = document.createElement('div');
+      win.className = 'window focused';
+      win.id = 'win-' + appId;
+      win.style.left = (60 + Object.keys(openWindows).length * 30) + 'px';
+      win.style.top = (60 + Object.keys(openWindows).length * 30) + 'px';
+      win.style.width = winWidth;
+      win.style.height = winHeight;
+      win.style.minWidth = '280px';
+      win.style.minHeight = '200px';
+      win.dataset.appId = appId;
+
+      var titleBar = document.createElement('div');
+      titleBar.className = 'title-bar';
+      titleBar.innerHTML = '<span class="title-bar-text">' + title + '</span>' +
+        '<div class="title-bar-buttons">' +
+          '<div class="title-btn" data-action="minimize">─</div>' +
+          '<div class="title-btn" data-action="maximize">□</div>' +
+          '<div class="title-btn close" data-action="close">✕</div>' +
+        '</div>';
+
+      var content = document.createElement('div');
+      content.className = 'window-content';
+      content.style.display = 'flex';
+      content.style.flex = '1';
+      content.style.overflow = 'hidden';
+
+      if (url) {
+        var iframe = document.createElement('iframe');
+        iframe.src = url;
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        iframe.style.flex = '1';
+        content.appendChild(iframe);
+      } else if (customContent) {
+        var iframe = document.createElement('iframe');
+        iframe.srcdoc = customContent;
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        iframe.style.flex = '1';
+        content.appendChild(iframe);
+      } else {
+        content.innerHTML = getDefaultContent(appId);
+      }
+
+      win.appendChild(titleBar);
+      win.appendChild(content);
+      document.body.appendChild(win);
+
+      openWindows[appId] = { title: title, element: win, minimized: false };
+      focusWindow(appId);
+      addTaskbarTab(appId, title);
+      enableDrag(win, titleBar, appId);
+
+      win.addEventListener('mousedown', function() { focusWindow(appId); });
+      titleBar.querySelectorAll('.title-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var action = btn.dataset.action;
+          if (action === 'minimize') minimizeWindow(appId);
+          else if (action === 'maximize') maximizeWindow(appId);
+          else if (action === 'close') closeWindow(appId);
+        });
+      });
+    }
+
+    function getDefaultContent(id) {
+      if (id === 'mycomputer') return '<p>本地磁盘 (C:)</p><p>本地磁盘 (D:)</p><p>CD-ROM (E:)</p>';
+      if (id === 'trash') return '<p>回收站为空。</p>';
+      if (id === 'sysinfo') return '<p>操作系统: Microsoft Windows 98</p><p>内存: 640K 可用</p><p>后台进程: SILENT.EXE</p><p>日期: 1998-12-24 02:33</p>';
+      return '<p>未知应用</p>';
+    }
+
+    function focusWindow(id) {
+      if (!openWindows[id]) return;
+      Object.values(openWindows).forEach(function(w) { w.element.classList.remove('focused'); });
+      openWindows[id].element.classList.add('focused');
+      openWindows[id].element.style.zIndex = ++windowZIndex;
+      focusedWindowId = id;
+      document.querySelectorAll('.taskbar-tab').forEach(function(t) { t.classList.remove('active'); });
+      var tab = document.querySelector('.taskbar-tab[data-window-id="' + id + '"]');
+      if (tab) tab.classList.add('active');
+    }
+
+    function minimizeWindow(id) {
+      if (openWindows[id]) { openWindows[id].element.style.display = 'none'; openWindows[id].minimized = true; }
+    }
+
+    function restoreWindow(id) {
+      if (openWindows[id]) { openWindows[id].element.style.display = 'flex'; openWindows[id].minimized = false; focusWindow(id); }
+    }
+
+    function closeWindow(id) {
+      if (openWindows[id]) {
+        openWindows[id].element.remove();
+        var tab = document.querySelector('.taskbar-tab[data-window-id="' + id + '"]');
+        if (tab) tab.remove();
+        delete openWindows[id];
+      }
+    }
+
+    function maximizeWindow(id) { }
+
+    function addTaskbarTab(id, title) {
+      var tabs = document.getElementById('taskbarTabs');
+      var tab = document.createElement('div');
+      tab.className = 'taskbar-tab active';
+      tab.dataset.windowId = id;
+      tab.textContent = title;
+      tab.onclick = function() {
+        if (openWindows[id]) {
+          openWindows[id].minimized ? restoreWindow(id) : (focusedWindowId === id ? minimizeWindow(id) : focusWindow(id));
+        }
+      };
+      tabs.appendChild(tab);
+      document.querySelectorAll('.taskbar-tab').forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+    }
+
+    function enableDrag(win, bar, id) {
+      var offX, offY, drag = false;
+      bar.addEventListener('mousedown', function(e) {
+        if (e.target.classList.contains('title-btn')) return;
+        drag = true;
+        var r = win.getBoundingClientRect();
+        offX = e.clientX - r.left;
+        offY = e.clientY - r.top;
+        win.style.cursor = 'move';
+        e.preventDefault();
+      });
+      document.addEventListener('mousemove', function(e) {
+        if (!drag) return;
+        win.style.left = Math.max(0, Math.min(window.innerWidth - 200, e.clientX - offX)) + 'px';
+        win.style.top = Math.max(0, Math.min(window.innerHeight - 80, e.clientY - offY)) + 'px';
+      });
+      document.addEventListener('mouseup', function() { drag = false; win.style.cursor = ''; });
+    }
+
+    // ==================== 开始菜单 ====================
+    var startMenu = document.getElementById('startMenu');
+    document.getElementById('startButton').addEventListener('click', function(e) {
+      e.stopPropagation();
+      startMenu.classList.toggle('visible');
+    });
+    document.addEventListener('click', function(e) {
+      if (!startMenu.contains(e.target) && e.target !== document.getElementById('startButton')) {
+        startMenu.classList.remove('visible');
+      }
+    });
+    document.querySelectorAll('.start-menu-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        var id = item.dataset.open;
+        var titles = { mycomputer:'我的电脑', diary:'日记', briefing:'每日简报', cases:'案宗索引', personnel:'人员档案', evidence:'物证追踪', comm:'通讯记录', geo:'坐标定位', directory:'员工名册', memos:'内部备忘录', dutylog:'值班日志' };
+        var urls = { mycomputer:'', sysinfo:'', trash:'' };
+        openWindow(titles[id] || id, urls[id] || ('app_' + id + '.html'), id, '700px', '500px');
+        startMenu.classList.remove('visible');
+      });
+    });
+
+    // ==================== 时钟/日期/崩坏 ====================
+    function getCurrentDate() {
+      if (Math.random() < HORROR_PROB.dateCorrupt) {
+        var cs = ['199█-1▉-2▉','19??-??-??','0000-00-00','1998-13-45','----.--.--','ERR:DATE'];
+        return { text: cs[Math.floor(Math.random()*cs.length)], isCorrupted: true };
+      }
+      return { text: '1998-12-24', isCorrupted: false };
+    }
+
+    function updateSyncedDate() {
+      var prev = syncedDate.isCorrupted;
+      syncedDate = getCurrentDate();
+      clockCorrupted = syncedDate.isCorrupted;
+      var dateDisplay = document.getElementById('clockDateDisplay');
+      dateDisplay.textContent = syncedDate.text;
+      dateDisplay.style.color = syncedDate.isCorrupted ? 'darkred' : '#222';
+      if (syncedDate.isCorrupted) dateDisplay.classList.add('date-shaking');
+      else dateDisplay.classList.remove('date-shaking');
+      if (document.getElementById('datetimePopup').style.display === 'flex') updatePopupDateFromSync();
+      updateTaskbarTime();
+      if (syncedDate.isCorrupted && !prev) {
+        sfxGlitch.currentTime = 0;
+        sfxGlitch.play().catch(function() {});
+      }
+    }
+
+    function updateTaskbarTime() {
+      var timeDisplay = document.getElementById('clockTimeDisplay');
+      if (clockCorrupted) {
+        timeDisplay.textContent = ['??:??', '##:##', 'EE:EE'][Math.floor(Math.random()*3)];
+        timeDisplay.style.color = 'darkred';
+        timeDisplay.classList.add('date-shaking');
+      } else {
+        var now = new Date();
+        timeDisplay.textContent = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+        timeDisplay.style.color = '#000';
+        timeDisplay.classList.remove('date-shaking');
+      }
+    }
+
+    setInterval(updateSyncedDate, 10000);
+    setInterval(updateTaskbarTime, 1000);
+    updateSyncedDate();
+
+    // 日期时间弹出面板
+    var datetimePopup = document.getElementById('datetimePopup');
+    var popupCtx = document.getElementById('popupClockCanvas').getContext('2d');
+    var popupDateInfo = document.getElementById('popupDateInfo');
+    var popupAnimId = null;
+
+    function drawPointer(ctx, cx, cy, angleDeg, len, width, color) {
+      var rad = angleDeg * Math.PI / 180;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(rad)*len, cy + Math.sin(rad)*len);
+      ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke();
+    }
+    function drawClockFace(ctx) {
+      var cx=35,cy=35,r=28; ctx.clearRect(0,0,70,70); ctx.fillStyle='#f0f0f0'; ctx.fillRect(0,0,70,70);
+      ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.stroke();
+      for (var i=0;i<12;i++) { var a=(i*30-90)*Math.PI/180; ctx.beginPath(); ctx.moveTo(cx+Math.cos(a)*(r-5),cy+Math.sin(a)*(r-5)); ctx.lineTo(cx+Math.cos(a)*(r-1),cy+Math.sin(a)*(r-1)); ctx.stroke(); }
+      ctx.font='7px "Press Start 2P"'; ctx.fillStyle='#000'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      for (var i=1;i<=12;i++) { var a=(i*30-90)*Math.PI/180; ctx.fillText(i, cx+Math.cos(a)*(r-12), cy+Math.sin(a)*(r-12)); }
+    }
+    function drawNormalPointers(ctx) {
+      var now=new Date(); var cx=35,cy=35,r=28;
+      var sec=(now.getSeconds()+now.getMilliseconds()/1000)*6-90;
+      var min=(now.getMinutes()+now.getSeconds()/60)*6-90;
+      var hour=((now.getHours()%12)+now.getMinutes()/60)*30-90;
+      drawPointer(ctx,cx,cy,hour,r*0.45,3,'#000'); drawPointer(ctx,cx,cy,min,r*0.6,2,'#000'); drawPointer(ctx,cx,cy,sec,r*0.7,1,'#aa0000');
+      ctx.beginPath(); ctx.arc(cx,cy,2,0,Math.PI*2); ctx.fill();
+    }
+    function drawCrazyPointers(ctx) {
+      var cx=35,cy=35,r=28,t=performance.now()*0.02;
+      drawPointer(ctx,cx,cy, (Math.sin(t*0.7)*180+360)%360, r*0.45,3,'#000');
+      drawPointer(ctx,cx,cy, (Math.cos(t*1.1)*180+360)%360, r*0.6,2,'#000');
+      drawPointer(ctx,cx,cy, (Math.sin(t*1.8)*180+360)%360, r*0.7,1,'#aa0000');
+      ctx.beginPath(); ctx.arc(cx,cy,2,0,Math.PI*2); ctx.fill();
+    }
+    function drawPopupClock() { drawClockFace(popupCtx); clockCorrupted ? drawCrazyPointers(popupCtx) : drawNormalPointers(popupCtx); }
+    function animatePopupClock() { if (datetimePopup.style.display === 'flex') { drawPopupClock(); popupAnimId = requestAnimationFrame(animatePopupClock); } }
+    function updatePopupDateFromSync() {
+      popupDateInfo.textContent = syncedDate.text;
+      popupDateInfo.style.color = syncedDate.isCorrupted ? 'darkred' : '#000';
+      if (syncedDate.isCorrupted) popupDateInfo.classList.add('date-shaking');
+      else popupDateInfo.classList.remove('date-shaking');
+    }
+    function openDateTimePopup() { updatePopupDateFromSync(); datetimePopup.style.display = 'flex'; if(popupAnimId) cancelAnimationFrame(popupAnimId); animatePopupClock(); }
+    function closeDateTimePopup() { datetimePopup.style.display = 'none'; if(popupAnimId) cancelAnimationFrame(popupAnimId); }
+    document.getElementById('systemTray').onclick = function(e) { e.stopPropagation(); datetimePopup.style.display === 'flex' ? closeDateTimePopup() : openDateTimePopup(); };
+    document.addEventListener('click', function(e) { if (datetimePopup.style.display === 'flex' && !datetimePopup.contains(e.target) && e.target.id !== 'systemTray') closeDateTimePopup(); });
+
+    // ==================== 恐怖效果 ====================
+    setInterval(function() {
+      if (Math.random() < HORROR_PROB.screenShiver) {
+        document.body.classList.add('shivering');
+        sfxHorror.currentTime = 0; sfxHorror.volume = 0.6; sfxHorror.play().catch(function() {});
+        setTimeout(function() { document.body.classList.remove('shivering'); }, 150);
+      }
+    }, 120000);
+
+    // 隐藏弹窗
+    var hiddenPopup = document.getElementById('hiddenPopup');
+    var popupMsg = document.getElementById('hiddenPopupMsg');
+    var popupMessages = [
+      "SILENT.EXE 正在尝试连接远程主机。",
+      "内存地址 0x000000F0 读取错误。",
+      "你没有保存的文件仍然存在。",
+      "摄像头已激活。",
+      "外部设备已连接。",
+      "数据包丢失，正在重试……",
+      "系统时间与服务器时间不同步。",
+      "检测到未签名驱动程序。"
+    ];
+    function maybeShowHiddenPopup() {
+      if (hiddenPopup.style.display === 'block') return;
+      if (Math.random() < 0.05) {
+        popupMsg.textContent = popupMessages[Math.floor(Math.random() * popupMessages.length)];
+        hiddenPopup.style.display = 'block';
+        setTimeout(function() { hiddenPopup.style.display = 'none'; }, 8000);
+      }
+    }
+    setInterval(maybeShowHiddenPopup, 15000);
+
+    // ==================== 反窥探遮罩 ====================
+    var antiDebugOverlay = document.getElementById('antiDebugOverlay');
+    var disconnectBtn = document.getElementById('disconnectBtn');
+    var isAntiDebugActive = false;
+
+    function showAntiDebugOverlay() {
+      if (isAntiDebugActive) return;
+      isAntiDebugActive = true;
+      antiDebugOverlay.classList.remove('active-out');
+      antiDebugOverlay.style.display = 'flex';
+      void antiDebugOverlay.offsetWidth;
+      antiDebugOverlay.classList.add('active-in');
+      sfxAntiDebug.currentTime = 0; sfxAntiDebug.volume = 0.7; sfxAntiDebug.play().catch(function() {});
+      incrementGaze();
+    }
+
+    function hideAntiDebugOverlay() {
+      isAntiDebugActive = false;
+      antiDebugOverlay.classList.remove('active-in');
+      antiDebugOverlay.classList.add('active-out');
+      setTimeout(function() {
+        antiDebugOverlay.style.display = 'none';
+        antiDebugOverlay.classList.remove('active-out');
+      }, 800);
+    }
+
+    disconnectBtn.addEventListener('click', hideAntiDebugOverlay);
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'F12' && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); showAntiDebugOverlay(); }
+      else if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) { e.preventDefault(); showAntiDebugOverlay(); }
+    });
+
+    // 加载眼睛ASCII
+    fetch('../assets/eye_ascii.txt')
+      .then(function(r) { return r.text(); })
+      .then(function(t) {
+        if (t.trim()) { document.getElementById('eyeAsciiArt').textContent = t; }
+      })
+      .catch(function() { /* 默认图案已显示 */ });
+
+    // ==================== 消息监听（解锁、恐怖效果、简报详情、结局触发） ====================
+    window.addEventListener('message', function(e) {
+      if (!e.data || typeof e.data !== 'object') return;
+
+      // 应用解锁
+      if (e.data.type === 'unlock') {
+        var app = e.data.app;
+        var token = e.data.token;
+        if (app && token) {
+          localStorage.setItem(app + '_access', 'true');
+        }
+      }
+
+      // 处理错误计数（每次输入错误都计数一次）
+      if (e.data.type === 'error_count') {
+        incrementGlobalErrors();
+      }
+
+      // 恐怖效果（屏幕震颤）- 保留原有的震颤触发，但不计数
+      if (e.data.type === 'horror_effect') {
+        var effect = e.data.effect;
+        if (effect === 'screenShiver') {
+          document.body.classList.add('shivering');
+          setTimeout(function() { document.body.classList.remove('shivering'); }, 200);
+          // 移除这里的 incrementGlobalErrors()，避免重复计数
+        }
+      }
+
+      // 简报详情窗口
+      if (e.data.type === 'open_briefing_detail') {
+        var detail = e.data;
+        var detailTitle = detail.title || '简报详情';
+        var detailHtml = '<div style="padding:10px; font-family:\'VT323\', monospace; font-size:14px; line-height:1.6;">';
+        detailHtml += '<div style="font-size:12px; color:#666; margin-bottom:8px;">' + detail.meta + '</div>';
+        if (detail.image) {
+          detailHtml += '<img src="' + detail.image + '" style="max-width:100%; height:auto; border:1px solid #ccc; margin-bottom:10px;" onerror="this.style.display=\'none\'">';
+        }
+        detailHtml += '<div style="text-align:justify;">' + detail.content + '</div>';
+        detailHtml += '</div>';
+        openWindow(detailTitle, '', 'briefing_detail_' + Date.now(), '700px', '600px', detailHtml);
+      }
+
+      // 结局触发（来自坐标定位或其他模块）
+      if (e.data.type === 'trigger_ending') {
+        var endingType = e.data.ending;
+        if (endingType) {
+          triggerEnding(endingType);
+        }
+      }
+    });
+
+    // ==================== 结局跳转 ====================
+    window.triggerEnding = function(type) {
+      // 重置计数器
+      gazeCount = 0;
+      globalErrors = 0;
+      localStorage.setItem('gaze_count', '0');
+      localStorage.setItem('global_errors', '0');
+
+      bgmInner.pause();
+      var endings = {
+        normal: '../endings/ending_normal.html',
+        gaze: '../endings/ending_bad_gaze.html',
+        selfdestruct: '../endings/ending_bad_selfdestruct.html',
+        true: '../endings/ending_true.html'
+      };
+      if (endings[type]) {
+        if (window.parent !== window) {
+          window.parent.postMessage({ type: 'navigate', url: endings[type] }, '*');
+        } else {
+          window.location.href = endings[type];
+        }
+      }
+    };
+  </script>
+</body>
+</html>

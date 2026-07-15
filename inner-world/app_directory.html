@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>员工名册</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      background: #c0c0c0;
+      font-family: 'Microsoft Sans Serif', 'VT323', monospace;
+      user-select: none;
+    }
+    .app-container { display: flex; flex-direction: column; height: 100%; padding: 8px; }
+    .app-header {
+      background: #000080; color: white; padding: 6px 10px;
+      font-size: 14px; font-weight: bold; margin-bottom: 6px; flex-shrink: 0;
+    }
+    .search-box { display: flex; gap: 6px; margin-bottom: 8px; flex-shrink: 0; }
+    .search-box input {
+      flex: 1; padding: 4px 8px; border: 2px inset #e0e0e0;
+      font-family: 'VT323', monospace; font-size: 16px; background: #fff;
+    }
+    .search-box button {
+      padding: 4px 16px; background: #c0c0c0; border: 2px outset #e0e0e0;
+      font-family: 'VT323', monospace; font-size: 14px; cursor: pointer;
+    }
+    .search-box button:active { border-style: inset; }
+    .result-area {
+      flex: 1; overflow: auto; background: #fff;
+      border: 2px inset #e0e0e0; padding: 10px;
+      font-size: 14px; line-height: 1.6;
+    }
+    .error { color: #aa0000; }
+    .file-header { font-weight: bold; margin-bottom: 10px; background: #e0e0e0; padding: 4px; }
+    .member-entry {
+      margin-bottom: 12px; border: 1px solid #ddd; padding: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="app-header">静湖镇警局 - 员工名册</div>
+    <div class="search-box">
+      <input type="text" id="queryInput" placeholder="输入部门名称 (如: 观测站)">
+      <button id="searchBtn">查询</button>
+    </div>
+    <div class="result-area" id="resultArea">
+      <p>请输入部门名称进行查询。</p>
+    </div>
+  </div>
+
+  <script>
+    const directoryDB = {
+      '观测站': [
+        { name: '魏明远', id: '018', role: '研究员', phone: '0398-7654001', address: '静湖镇科技路12号' },
+        { name: '何淑华', id: '042', role: '门卫', phone: '0398-7654002', address: '静湖镇北区平安街12号' },
+        { name: '张伟', id: '035', role: '副研究员', phone: '0398-7654003', address: '静湖镇东区建设路5号' },
+        { name: '刘洋', id: '077', role: '实习生', phone: '0398-7654004', address: '静湖镇南区文化路8号' }
+      ],
+      '警局': [
+        { name: '王志国', id: '101', role: '巡警队长', phone: '0398-7654101', address: '静湖镇警局宿舍' },
+        { name: '李军', id: '102', role: '刑警', phone: '0398-7654102', address: '静湖镇警局宿舍' },
+        { name: '陈晓', id: '103', role: '文职', phone: '0398-7654103', address: '静湖镇北区幸福路3号' },
+        { name: '孙强', id: '104', role: '交警', phone: '0398-7654104', address: '静湖镇南区滨河路7号' },
+        { name: '赵磊', id: '105', role: '法医', phone: '0398-7654105', address: '静湖镇警局技术科' }
+      ],
+      '医院': [
+        { name: '李芳', id: '205', role: '护士', phone: '0398-7654201', address: '静湖镇医院宿舍' },
+        { name: '赵敏', id: '098', role: '护士长', phone: '0398-7654202', address: '静湖镇西区康乐街9号' },
+        { name: '王刚', id: '210', role: '外科医生', phone: '0398-7654203', address: '静湖镇南区健康路2号' },
+        { name: '周莉', id: '211', role: '药剂师', phone: '0398-7654204', address: '静湖镇东区药房' }
+      ],
+      '消防队': [
+        { name: '赵强', id: '330', role: '队长', phone: '0398-7654301', address: '静湖镇消防队' },
+        { name: '钱浩', id: '331', role: '副队长', phone: '0398-7654302', address: '静湖镇消防队' },
+        { name: '孙涛', id: '332', role: '消防员', phone: '0398-7654303', address: '静湖镇消防队' }
+      ],
+      '镇政府': [
+        { name: '周文', id: '501', role: '宣传科科长', phone: '0398-7654401', address: '静湖镇政府办公楼' },
+        { name: '吴志远', id: '502', role: '文化站站长', phone: '0398-7654402', address: '静湖镇文化站' },
+        { name: '郑秋', id: '503', role: '周报记者', phone: '0398-7654403', address: '静湖镇报社' }
+      ],
+      '学校': [
+        { name: '张秀英', id: '601', role: '校长', phone: '0398-7654501', address: '静湖镇中心小学' },
+        { name: '王建国', id: '602', role: '教师', phone: '0398-7654502', address: '静湖镇中心小学' },
+        { name: '刘晓丽', id: '603', role: '教师', phone: '0398-7654503', address: '静湖镇中心小学' }
+      ],
+      '邮局': [
+        { name: '马洪', id: '701', role: '局长', phone: '0398-7654601', address: '静湖镇邮局' },
+        { name: '宋芳', id: '702', role: '邮递员', phone: '0398-7654602', address: '静湖镇邮局' }
+      ],
+      '银行': [
+        { name: '韩雪', id: '801', role: '经理', phone: '0398-7654701', address: '静湖镇农业银行' },
+        { name: '董明', id: '802', role: '柜员', phone: '0398-7654702', address: '静湖镇农业银行' }
+      ]
+    };
+
+    let errorCount = 0;
+    const SHAKE_THRESHOLD = 3;
+    const input = document.getElementById('queryInput');
+    const btn = document.getElementById('searchBtn');
+    const result = document.getElementById('resultArea');
+
+    function displayResult(message, isError = false) {
+      result.innerHTML = '';
+      const p = document.createElement('div');
+      p.className = isError ? 'error' : '';
+      p.innerHTML = message;
+      result.appendChild(p);
+    }
+
+    function showDirectory(department, members) {
+      result.innerHTML = '';
+      const header = document.createElement('div');
+      header.className = 'file-header';
+      header.textContent = `部门: ${department} (共${members.length}人)`;
+      result.appendChild(header);
+      members.forEach(member => {
+        const memberDiv = document.createElement('div');
+        memberDiv.className = 'member-entry';
+        memberDiv.innerHTML = `
+          <b>姓名:</b> ${member.name}<br>
+          <b>工号:</b> #${member.id}<br>
+          <b>职务:</b> ${member.role}<br>
+          <b>电话:</b> ${member.phone}<br>
+          <b>住址:</b> ${member.address}
+        `;
+        result.appendChild(memberDiv);
+      });
+    }
+
+    function search() {
+      const department = input.value.trim();
+      if (!department) { displayResult('请输入部门名称。', true); return; }
+      const members = directoryDB[department];
+      if (members) {
+        showDirectory(department, members);
+        errorCount = 0;
+      } else {
+        errorCount++;
+        displayResult('无此部门记录。', true);
+        // 每次错误都发送计数消息给桌面
+        window.parent.postMessage({ type: 'error_count' }, '*');
+        if (errorCount >= SHAKE_THRESHOLD) {
+          if (window.parent !== window) {
+            window.parent.postMessage({ type: 'horror_effect', effect: 'screenShiver' }, '*');
+          }
+          errorCount = 0;
+        }
+      }
+    }
+
+    btn.addEventListener('click', search);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') search(); });
+  </script>
+</body>
+</html>
