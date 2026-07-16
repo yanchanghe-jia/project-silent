@@ -126,6 +126,7 @@
     <div class="desktop-icon" ondblclick="openWindow('我的电脑','','mycomputer')"><div class="icon-img">🖥️</div><div>我的电脑</div></div>
     <div class="desktop-icon" ondblclick="openWindow('回收站','','trash')"><div class="icon-img">🗑️</div><div>回收站</div></div>
     <div class="desktop-icon" ondblclick="openWindow('日记','app_diary.html','diary','500px','400px')"><div class="icon-img">📓</div><div>日记</div></div>
+    <div class="desktop-icon" ondblclick="openWindow('记事本','','notepad_inner','500px','400px', notepadInnerContent)"><div class="icon-img">📝</div><div>记事本</div></div>
     <div class="desktop-icon" ondblclick="openWindow('系统信息','','sysinfo')"><div class="icon-img">⚙️</div><div>系统信息</div></div>
     <div class="desktop-icon" ondblclick="openWindow('案宗索引','app_cases.html','cases','700px','500px')"><div class="icon-img">📁</div><div>案宗索引</div></div>
     <div class="desktop-icon" ondblclick="openWindow('人员档案','app_personnel.html','personnel','700px','500px')"><div class="icon-img">👤</div><div>人员档案</div></div>
@@ -154,6 +155,7 @@
   <div class="start-menu" id="startMenu">
     <div class="start-menu-item" data-open="mycomputer">🖥️ 我的电脑</div>
     <div class="start-menu-item" data-open="diary">📓 日记</div>
+    <div class="start-menu-item" data-open="notepad_inner">📝 记事本</div>
     <div class="start-menu-item" data-open="briefing">📰 每日简报</div>
     <div class="start-menu-item" data-open="cases">📁 案宗索引</div>
     <div class="start-menu-separator"></div>
@@ -184,33 +186,16 @@
   <div class="anti-debug-overlay" id="antiDebugOverlay">
     <div class="scanlines"></div>
     <div class="glitch-box">
-      <pre class="eye-art" id="eyeAsciiArt">
-%##:---:-=-++====+++++==--::::::. .                 ..   ::. ::::--===++
-#+:.:-==**#%%@@@@@@@@@%%%###*+==::::.:                . . .:.::.::--==++
-+::=+*%@@@@@@@@@@@@@@@@%%%#####***+++=--:.:.       .  .:.:..:::::::--=++
-=-=*%@@@@@@@@@@@@@@@@@%%%###***+++++=+====------:::::::.::-::::::---===+
-++*%@@@@@@@@@@@@@@%%%###**++===----:-::::::------=-=-==-=-==-==-=====+++
-*#%@@@@@@@@@@@%%%#**++=----===*=:===-:::      :---======+==++=+++*+***##
-#%@@@@@@@@%%%##*+-:.:=%@@@@@%**+   :. ::::..      :==+++=+++++****###%%%
-%%@@@@%@%%#**+=: -%*=+-==                           .+++++++=++***##%@@@
-@%%@%%@%##+-:  -###+:.                                 ==+=+=+++*##%@@@@
-%@%%%%%#*+=- -:        :==   +=--           .            --==-==**%%%@@@
-%@%%%##+=:  +#+:    -*%@%: :@@*#        .    :..          .::---+*#%@@@@
-%%%%##+-:  .      =*%@@@@.:@@@@-        ::   ::.:..         :::--*#%%@@@
-%%%##*=-        :*@@@@@@@: ::.         --=   .:..:::.   .::  :--=*#%@@@@
-%###*+=:     .-:*@@@@@@@@=.-::        -==-   ::::::::     ===-=+*%%@@@@@
-%##**+--:.=+*+++#@@@@@@@@@-.::- --:--=--:.  :::.::-:.     :-*###%@@@@@@@
-%%##*++==--::-=*#%@@@@@@@@@= .: -.==.=-:. .--:-::::::..::-=+**#%@@@@@@@@
-@%%%%##**+*++==---+%%@@@@@@@@=. . -: .  :==-=++*++=--:::-=++**#%@@@@@@@@
-@@@%@%%%%%*#*#*#+*=**-+*#@@@@@@%#===++*+##+++=--.:.. ..:.:--=*%@@@@@@@@@
-@@@@@@%@%%@%%##%##*#**%=-*%==#*%+-**+-+==::.:::          .:=*%@@@@@@@@@@
-@@@@@@@@@@%@@%@%##%#%-**#+###+*-*++=.--::::.. .       :::-=*#@@@@@@@@@@@
-@@@@@@@@@@@@@@@%@@@%*#%###*#+#*+*+=+----::::.      ::---=+*%%@@@@@@@@@@@
-@@@@@@@@@@@@@@@@@@@@%@@@%%#%*##*##**++---:.   .--=====++*#%@@@@@@@@@@@@@
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@%%%##*++=-:::-==+=+=+++++**%%@@@@@@@@@@@@@@@
-@@@@@@@@@@@@@@@@@@@@@@@@@%%###*#####*#***********+**##%%@@@@@@@@@@@@@@@@
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%%%%%%%#%#*#**#***#%%%@@@@@@@@@@@@@@@@@@@
-      </pre>
+      <pre class="eye-art" id="eyeAsciiArt">████████████████
+██            ██
+██   ▄▄▄▄▄   ██
+██  ███████  ██
+██  █ █ █ █  ██
+██  █ █▄█ █  ██
+██  ███████  ██
+██   ▀▀▀▀▀   ██
+██            ██
+████████████████</pre>
       <div class="title">不要试图直视祂的眼睛</div>
       <button class="disconnect-btn" id="disconnectBtn">我已知晓</button>
     </div>
@@ -277,10 +262,6 @@
     window.triggerEnding = function(type) {
       gazeCount = 0; errorCount = 0;
       bgmInner.pause();
-      // 暂停所有可能冲突的音频
-      sfxAntiDebug.pause();
-      sfxAntiDebug.currentTime = 0;
-      
       var endings = {
         normal: '../endings/ending_normal.html',
         gaze: '../endings/ending_bad_gaze.html',
@@ -295,6 +276,50 @@
         }
       }
     };
+
+    // ==================== 记事本自定义内容 ====================
+    var notepadInnerContent = `
+      <style>
+        html, body { height: 100%; margin: 0; overflow: hidden; background: #fff; font-family: 'Microsoft Sans Serif', 'VT323', monospace; }
+        .notepad-container { display: flex; flex-direction: column; height: 100%; }
+        .notepad-toolbar { background: #c0c0c0; padding: 4px 8px; font-size: 12px; border-bottom: 1px solid #808080; flex-shrink: 0; }
+        .notepad-area { flex: 1; position: relative; }
+        textarea { width: 100%; height: 100%; border: none; outline: none; resize: none; padding: 10px; font-family: 'VT323', monospace; font-size: 16px; line-height: 1.6; background: #fffff0; }
+        .placeholder {
+          position: absolute; top: 10px; left: 10px; right: 10px;
+          color: #aaa; font-family: 'VT323', monospace; font-size: 16px;
+          pointer-events: none; white-space: pre-wrap;
+        }
+      </style>
+      <div class="notepad-container">
+        <div class="notepad-toolbar">文件 编辑 格式 查看 帮助</div>
+        <div class="notepad-area">
+          <textarea id="notepadText"></textarea>
+          <div class="placeholder" id="notepadPlaceholder">也许我可以在这里记些东西...</div>
+        </div>
+      </div>
+      <script>
+        (function() {
+          var ta = document.getElementById('notepadText');
+          var ph = document.getElementById('notepadPlaceholder');
+          function updatePlaceholder() {
+            if (ta.value.trim() === '') {
+              ph.style.display = 'block';
+            } else {
+              ph.style.display = 'none';
+            }
+          }
+          ta.addEventListener('focus', function() {
+            if (ta.value.trim() === '') {
+              ph.style.display = 'none';
+            }
+          });
+          ta.addEventListener('blur', updatePlaceholder);
+          ta.addEventListener('input', updatePlaceholder);
+          updatePlaceholder();
+        })();
+      <\/script>
+    `;
 
     // ==================== 窗口管理（修复尺寸） ====================
     var windowZIndex = 100, openWindows = {}, focusedWindowId = null;
@@ -444,9 +469,10 @@
     document.querySelectorAll('.start-menu-item').forEach(function(item) {
       item.addEventListener('click', function() {
         var id = item.dataset.open;
-        var titles = { mycomputer:'我的电脑', diary:'日记', briefing:'每日简报', cases:'案宗索引', personnel:'人员档案', evidence:'物证追踪', comm:'通讯记录', geo:'坐标定位', directory:'员工名册', memos:'内部备忘录', dutylog:'值班日志' };
+        var titles = { mycomputer:'我的电脑', diary:'日记', notepad_inner:'记事本', briefing:'每日简报', cases:'案宗索引', personnel:'人员档案', evidence:'物证追踪', comm:'通讯记录', geo:'坐标定位', directory:'员工名册', memos:'内部备忘录', dutylog:'值班日志' };
         var urls = { mycomputer:'', sysinfo:'', trash:'' };
-        openWindow(titles[id] || id, urls[id] || ('app_' + id + '.html'), id, '700px', '500px');
+        var content = id === 'notepad_inner' ? notepadInnerContent : undefined;
+        openWindow(titles[id] || id, urls[id] || ('app_' + id + '.html'), id, '700px', '500px', content);
         startMenu.classList.remove('visible');
       });
     });
@@ -573,7 +599,6 @@
     function showAntiDebugOverlay() {
       if (isAntiDebugActive) return;
       isAntiDebugActive = true;
-      bgmInner.pause();
       antiDebugOverlay.classList.remove('active-out');
       antiDebugOverlay.style.display = 'flex';
       void antiDebugOverlay.offsetWidth;
@@ -586,11 +611,6 @@
       isAntiDebugActive = false;
       antiDebugOverlay.classList.remove('active-in');
       antiDebugOverlay.classList.add('active-out');
-      // 暂停反篡改音频
-      sfxAntiDebug.pause();
-      sfxAntiDebug.currentTime = 0;
-      // 恢复背景音乐
-      bgmInner.play().catch(function(){});
       setTimeout(function() {
         antiDebugOverlay.style.display = 'none';
         antiDebugOverlay.classList.remove('active-out');
