@@ -238,19 +238,30 @@
         if (currentContact !== 'linyue') return;
         var text = input.value.trim();
         if (!text) return;
-        chatLog.appendChild(createMessageElement('mine', text, '陈垣', 'linyue'));
-        chatLog.scrollTop = chatLog.scrollHeight;
+        
+        // 将用户消息存入数据数组
+        chatData.linyue.push({ type: 'mine', text: text, sender: '陈垣' });
+        
+        // 重新渲染聊天记录
+        renderHistory('linyue');
+        
         input.value = '';
         input.focus();
+      
         // 播放发送消息音效
+        var msgSound = document.getElementById('msgSound');
         if (msgSound) {
           msgSound.currentTime = 0;
           msgSound.play().catch(function() {});
         }
-
+      
+        // 延迟自动回复
         setTimeout(function() {
-          chatLog.appendChild(createMessageElement('other', '[自动回复]你好，我现在不在线，有事请留言。', '林越', 'linyue'));
-          chatLog.scrollTop = chatLog.scrollHeight;
+          // 将自动回复存入数据数组
+          chatData.linyue.push({ type: 'other', text: '[自动回复]你好，我现在不在线，有事请留言。', sender: '林越' });
+          // 重新渲染聊天记录
+          renderHistory('linyue');
+          // 播放自动回复音效
           if (autoReplySound) {
             autoReplySound.currentTime = 0;
             autoReplySound.play().catch(function() {});
