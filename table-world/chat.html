@@ -23,12 +23,16 @@
 
     /* 消息行 */
     .message-row { display: flex; margin-bottom: 20px; }
-    .message-row.mine { flex-direction: row-reverse; }   /* 我的消息：头像在右 */
-    .message-row.other { flex-direction: row; }          /* 对方消息：头像在左 */
+    .message-row.mine { flex-direction: row-reverse; }
+    .message-row.other { flex-direction: row; }
     .message-row.system { justify-content: center; }
 
     .message-avatar { width: 36px; height: 36px; border-radius: 4px; flex-shrink: 0; overflow: hidden; }
     .message-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    /* 头像与气泡之间的间距 */
+    .message-row.mine .message-avatar { margin-left: 10px; }
+    .message-row.other .message-avatar { margin-right: 10px; }
+
     .message-body { max-width: 60%; display: flex; flex-direction: column; }
     .message-body .sender-name { font-size: 11px; color: #999; margin-bottom: 4px; padding: 0 4px; }
     .message-body .bubble { padding: 10px 15px; border-radius: 4px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
@@ -60,10 +64,14 @@
   <div class="wechat-pc">
     <div class="contact-list">
       <div class="search-box"><input type="text" placeholder="搜索" disabled></div>
+      <!-- 好友 - 使用真实头像 -->
       <div class="contact-item active" data-contact="linyue" data-type="friend">
-        <div class="avatar"><img src="../assets/images/wechat_avatar_linyue.png" alt="林越"></div>
+        <div class="avatar">
+          <img src="../assets/images/wechat_avatar_linyue.png" alt="林越">
+        </div>
         <div class="name">林越</div>
       </div>
+      <!-- 公众号 -->
       <div class="contact-item" data-contact="shentan" data-type="official">
         <div class="avatar" style="background:#FF6B6B;">探</div>
         <div class="name">深夜探秘</div>
@@ -88,6 +96,7 @@
     </div>
   </div>
 
+  <!-- 音频：自动回复提示音 -->
   <audio id="autoReplySound" src="../assets/audio/auto_reply.mp3" preload="auto"></audio>
 
   <script>
@@ -124,7 +133,7 @@
         ],
         shentan: [
           { type: 'divider', text: getRecentDate(7) + ' 下午20:42' },
-          { type: 'other', article: { cover: '../assets/images/briefing_stone_eye.png', title: '⚠️ 震惊！98年的静湖镇失踪事件竟与一个神秘坐标有关？至今未解！', desc: '近日有网友在“谜域”论坛上传了一份据称来自警方内部的压缩包，里面可能藏着当年那起离奇失踪案的真相……', date: getRecentDate(7) }, sender: '深夜探秘' },
+          { type: 'other', article: { cover: '../assets/images/briefing_stone_eye.png', title: '⚠️ 震惊！1998年静湖镇失踪事件竟与一个神秘坐标有关？至今未解！', desc: '近日有网友在“谜域”论坛上传了一份据称来自警方内部的压缩包，里面可能藏着当年那起离奇失踪案的真相……', date: getRecentDate(7) }, sender: '深夜探秘' },
           { type: 'divider', text: getRecentDate(10) + ' 上午09:15' },
           { type: 'other', text: '你相信时空错位吗？我们收到了粉丝投稿，说他家阁楼里发现了一台1998年的旧电脑……', sender: '深夜探秘' },
           { type: 'other', text: '关注我，带你探索世界未解之谜！', sender: '深夜探秘' }
@@ -135,7 +144,7 @@
           { type: 'divider', text: getRecentDate(4) + ' 上午08:00' },
           { type: 'other', text: '【社区通知】静湖镇天文观测站因设施老化，将于本月起封闭维护，请市民不要靠近。', sender: '静湖日报' },
           { type: 'divider', text: getRecentDate(8) + ' 上午07:45' },
-          { type: 'other', article: { cover: '../assets/images/placeholder_observatory.png', title: '老档案：1998年天文台研究员失踪事件回顾', desc: '上世纪九十年代，静湖镇天文观测站研究员魏明远在值夜班时神秘失踪，至今下落不明。警方当时以意外坠崖结案，但诸多疑点至今未解……', date: getRecentDate(8) }, sender: '静湖日报' }
+          { type: 'other', article: { cover: '../assets/images/placeholder_observatory.png', title: '老档案：1998年天文台研究员失踪事件回顾', desc: '上世纪九十年代某天夜晚，静湖镇天文观测站研究员魏明远在值夜班时神秘失踪，至今下落不明。警方当时以意外坠崖结案，但诸多疑点至今未解……', date: getRecentDate(8) }, sender: '静湖日报' }
         ],
         wechat: [
           { type: 'divider', text: getRecentDate(30) + ' 下午14:20' },
@@ -156,15 +165,13 @@
 
       function escapeHtml(str) { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-      // 创建消息元素（昵称在上方）
       function createMessageElement(type, text, senderName) {
         var row = document.createElement('div');
-        row.className = 'message-row ' + type;
+        row.className = 'message-row ' + (type === 'system' ? 'system' : type);
         if (type === 'system') {
           row.innerHTML = '<div class="message-body"><div class="bubble">' + escapeHtml(text) + '</div></div>';
           return row;
         }
-        // 头像路径
         var avatarSrc = type === 'mine' ? '../assets/images/wechat_avatar_chenyuan.png' : '../assets/images/wechat_avatar_linyue.png';
         var avatarHtml = '<div class="message-avatar"><img src="' + avatarSrc + '" alt="头像" onerror="this.style.display=\'none\'"></div>';
         var nameHtml = senderName ? '<div class="sender-name">' + escapeHtml(senderName) + '</div>' : '';
@@ -174,7 +181,6 @@
         return row;
       }
 
-      // 创建公众号推文（昵称在上方）
       function createArticleElement(article, senderName) {
         var row = document.createElement('div');
         row.className = 'message-row other';
@@ -217,7 +223,6 @@
         input.value = '';
         input.focus();
 
-        // 2秒后自动回复
         setTimeout(function() {
           chatLog.appendChild(createMessageElement('other', '[自动回复]你好，我现在不在线，有事请留言。', '林越'));
           chatLog.scrollTop = chatLog.scrollHeight;
