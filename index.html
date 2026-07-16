@@ -72,6 +72,11 @@
       overlay.classList.add('hidden');
       gameFrame.style.display = 'block';
       gameFrame.src = 'table-world/index.html';
+      
+      // 等待 iframe 加载完成后，发送激活消息
+      gameFrame.onload = () => {
+        gameFrame.contentWindow.postMessage({ type: 'init_audio' }, '*');
+      }; 
     });
 
     window.addEventListener('message', (e) => {
