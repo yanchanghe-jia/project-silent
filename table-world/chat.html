@@ -241,6 +241,11 @@
         chatLog.scrollTop = chatLog.scrollHeight;
         input.value = '';
         input.focus();
+        // 播放发送消息音效
+        if (msgSound) {
+          msgSound.currentTime = 0;
+          msgSound.play().catch(function() {});
+        }
 
         setTimeout(function() {
           chatLog.appendChild(createMessageElement('other', '[自动回复]你好，我现在不在线，有事请留言。', '林越', 'linyue'));
