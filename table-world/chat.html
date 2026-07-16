@@ -29,6 +29,12 @@
 
     .message-avatar { width: 36px; height: 36px; border-radius: 4px; flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: #fff; }
     .message-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    
+    /* 对方消息的头像在左，右侧需要间距 */
+    .message-row.other .message-avatar { margin-right: 10px; }
+
+    /* 自己消息的头像在右，左侧需要间距 */
+    .message-row.mine .message-avatar { margin-left: 10px; }
 
     .message-body { max-width: 55%; display: flex; flex-direction: column; }
     .message-body .sender-name { font-size: 11px; color: #999; margin-bottom: 4px; padding: 0 4px; }
