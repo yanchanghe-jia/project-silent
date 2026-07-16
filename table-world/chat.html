@@ -20,20 +20,28 @@
     .chat-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
     .chat-header { padding: 15px 20px; border-bottom: 1px solid #e0e0e0; font-size: 16px; font-weight: bold; background: #fafafa; flex-shrink: 0; }
     .chat-log { flex: 1; padding: 20px; overflow-y: auto; background: #f5f5f5; }
-    /* 消息行：左右对齐 */
-    .message-row { display: flex; align-items: flex-end; margin-bottom: 20px; gap: 8px; }
-    .message-row.mine { flex-direction: row-reverse; }
-    .message-row.other { flex-direction: row; }
+
+    /* 消息行 */
+    .message-row { display: flex; margin-bottom: 20px; }
+    .message-row.mine { flex-direction: row-reverse; }   /* 我的消息：头像在右 */
+    .message-row.other { flex-direction: row; }          /* 对方消息：头像在左 */
     .message-row.system { justify-content: center; }
+
     .message-avatar { width: 36px; height: 36px; border-radius: 4px; flex-shrink: 0; overflow: hidden; }
     .message-avatar img { width: 100%; height: 100%; object-fit: cover; }
     .message-body { max-width: 60%; display: flex; flex-direction: column; }
+    .message-body .sender-name { font-size: 11px; color: #999; margin-bottom: 4px; padding: 0 4px; }
     .message-body .bubble { padding: 10px 15px; border-radius: 4px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
-    .message-row.mine .bubble { background: #95EC69; }
+    /* 对方气泡 */
     .message-row.other .bubble { background: #fff; border: 1px solid #ededed; }
+    .message-row.other .sender-name { text-align: left; }
+    /* 自己气泡 */
+    .message-row.mine .bubble { background: #95EC69; }
+    .message-row.mine .sender-name { text-align: right; }
+    /* 系统消息 */
     .message-row.system .bubble { background: #e5e5e5; color: #888; font-size: 12px; border-radius: 4px; padding: 5px 12px; max-width: 100%; }
-    .message-body .meta { font-size: 11px; color: #999; margin-top: 4px; padding: 0 4px; }
-    .message-row.system .meta { display: none; }
+    .message-row.system .sender-name { display: none; }
+
     .time-divider { text-align: center; margin: 15px 0; font-size: 12px; color: #999; }
     .chat-input-area { border-top: 1px solid #e0e0e0; padding: 15px; background: #fff; display: flex; gap: 10px; flex-shrink: 0; }
     .chat-input-area.hidden { display: none; }
@@ -52,14 +60,10 @@
   <div class="wechat-pc">
     <div class="contact-list">
       <div class="search-box"><input type="text" placeholder="搜索" disabled></div>
-      <!-- 好友 - 头像使用图片 -->
       <div class="contact-item active" data-contact="linyue" data-type="friend">
-        <div class="avatar">
-          <img src="../assets/images/wechat_avatar_linyue.png" alt="林越">
-        </div>
+        <div class="avatar"><img src="../assets/images/wechat_avatar_linyue.png" alt="林越"></div>
         <div class="name">林越</div>
       </div>
-      <!-- 公众号 -->
       <div class="contact-item" data-contact="shentan" data-type="official">
         <div class="avatar" style="background:#FF6B6B;">探</div>
         <div class="name">深夜探秘</div>
@@ -84,7 +88,6 @@
     </div>
   </div>
 
-  <!-- 音频：自动回复提示音 -->
   <audio id="autoReplySound" src="../assets/audio/auto_reply.mp3" preload="auto"></audio>
 
   <script>
@@ -102,47 +105,47 @@
       var chatData = {
         linyue: [
           { type: 'divider', text: dateLabels.day5 + ' 晚上21:15' },
-          { type: 'other', text: '陈垣，你听说过静湖镇那个案子吗？1998年天文观测站研究员失踪的事。', meta: '林越' },
-          { type: 'mine', text: '好像有点印象，但网上资料特别少。你找到什么了？', meta: '陈垣' },
+          { type: 'other', text: '陈垣，你听说过静湖镇那个案子吗？九十年代天文观测站研究员失踪的事。', sender: '林越' },
+          { type: 'mine', text: '好像有点印象，但网上资料特别少。你找到什么了？', sender: '陈垣' },
           { type: 'divider', text: dateLabels.day3 + ' 下午15:40' },
-          { type: 'other', text: "我托人搞到了一批旧档案的电子版，里面提到了一个坐标：北纬39°24'，东经115°48'。那个地方就在静湖镇废弃观测站附近。", meta: '林越' },
-          { type: 'mine', text: '你打算自己去？别冲动，那地方太偏了。', meta: '陈垣' },
+          { type: 'other', text: "我托人搞到了一批旧档案的电子版，里面提到了一个坐标。那个地方就在静湖镇废弃观测站附近。", sender: '林越' },
+          { type: 'mine', text: '你打算自己去？别冲动，那地方太偏了。', sender: '陈垣' },
           { type: 'divider', text: dateLabels.yesterday + ' 上午10:08' },
-          { type: 'other', text: '我已经在路上了。档案里还说，观测站当年的无线电信号记录过一段奇怪的脉冲，听起来像是有规律的数字。', meta: '林越' },
-          { type: 'other', text: '如果我明天还没回你消息，就把我发给你的压缩包发到网上。我已经上传到“谜域”论坛了，帖子名叫“关于静湖镇1998年案件”。', meta: '林越' },
-          { type: 'mine', text: '你发了什么东西？我怎么没看到？', meta: '陈垣' },
-          { type: 'other', text: '是那个压缩包，silent_archive.zip。别怕，信我。去那个帖子下载，里面有线索。', meta: '林越' },
+          { type: 'other', text: '我已经在路上了。档案里还说，观测站当年的无线电信号记录过一段奇怪的脉冲，听起来像是有规律的数字。', sender: '林越' },
+          { type: 'other', text: '如果我明天还没回你消息，就把我发给你的压缩包发到网上。我已经上传到“谜域”论坛了，帖子名叫“关于静湖镇九十年代案件”。', sender: '林越' },
+          { type: 'mine', text: '你发了什么东西？我怎么没看到？', sender: '陈垣' },
+          { type: 'other', text: '是那个压缩包，silent_archive.zip。别怕，信我。去那个帖子下载，里面有线索。', sender: '林越' },
           { type: 'divider', text: dateLabels.today + ' 上午11:20' },
-          { type: 'mine', text: '林越，你还好吗？', meta: '陈垣' },
-          { type: 'mine', text: '看到回个话，我很担心。', meta: '陈垣' },
-          { type: 'system', text: '[语音通话] 对方已拒绝', meta: '' },
-          { type: 'mine', text: '快接电话啊！', meta: '陈垣' },
-          { type: 'mine', text: '我马上去论坛找你发的那个帖子。', meta: '陈垣' }
+          { type: 'mine', text: '林越，你还好吗？', sender: '陈垣' },
+          { type: 'mine', text: '看到回个话，我很担心。', sender: '陈垣' },
+          { type: 'system', text: '[语音通话] 对方已拒绝' },
+          { type: 'mine', text: '快接电话啊！', sender: '陈垣' },
+          { type: 'mine', text: '我马上去论坛找你发的那个帖子。', sender: '陈垣' }
         ],
         shentan: [
           { type: 'divider', text: getRecentDate(7) + ' 下午20:42' },
-          { type: 'other', meta: '深夜探秘', article: { cover: '../assets/images/briefing_stone_eye.png', title: '⚠️ 震惊！1998年静湖镇失踪事件竟与一个神秘坐标有关？至今未解！', desc: '近日有网友在“谜域”论坛上传了一份据称来自警方内部的压缩包，里面可能藏着当年那起离奇失踪案的真相……', date: getRecentDate(7) }},
+          { type: 'other', article: { cover: '../assets/images/briefing_stone_eye.png', title: '⚠️ 震惊！未解之谜——静湖镇失踪事件竟与一个神秘坐标有关？至今未解！', desc: '近日有网友在“谜域”论坛上传了一份据称来自警方内部的压缩包，里面可能藏着当年那起离奇失踪案的真相……', date: getRecentDate(7) }, sender: '深夜探秘' },
           { type: 'divider', text: getRecentDate(10) + ' 上午09:15' },
-          { type: 'other', text: '你相信时空错位吗？我们收到了粉丝投稿，说他家阁楼里发现了一台1998年的旧电脑……', meta: '深夜探秘' },
-          { type: 'other', text: '关注我，带你探索世界未解之谜！', meta: '深夜探秘' }
+          { type: 'other', text: '你相信时空错位吗？我们收到了粉丝投稿，说他家阁楼里发现了一台1998年的旧电脑……', sender: '深夜探秘' },
+          { type: 'other', text: '关注我，带你探索世界未解之谜！', sender: '深夜探秘' }
         ],
         daily: [
           { type: 'divider', text: getRecentDate(2) + ' 上午07:30' },
-          { type: 'other', text: '【静湖日报】今日天气：晴，-5℃~3℃，北风3级。', meta: '静湖日报' },
+          { type: 'other', text: '【静湖日报】今日天气：晴，-5℃~3℃，北风3级。', sender: '静湖日报' },
           { type: 'divider', text: getRecentDate(4) + ' 上午08:00' },
-          { type: 'other', text: '【社区通知】静湖镇天文观测站因设施老化，将于本月起封闭维护，请市民不要靠近。', meta: '静湖日报' },
+          { type: 'other', text: '【社区通知】静湖镇天文观测站因设施老化，将于本月起封闭维护，请市民不要靠近。', sender: '静湖日报' },
           { type: 'divider', text: getRecentDate(8) + ' 上午07:45' },
-          { type: 'other', meta: '静湖日报', article: { cover: '../assets/images/placeholder_observatory.png', title: '老档案：1998年天文台研究员失踪事件回顾', desc: '1998年12月24日，静湖镇天文观测站研究员魏明远在值夜班时神秘失踪，至今下落不明。警方当时以意外坠崖结案，但诸多疑点至今未解……', date: getRecentDate(8) }}
+          { type: 'other', article: { cover: '../assets/images/placeholder_observatory.png', title: '老档案：30多年前天文台研究员失踪事件回顾', desc: '上世纪九十年代，静湖镇天文观测站研究员魏明远在值夜班时神秘失踪，至今下落不明。警方当时以意外坠崖结案，但诸多疑点至今未解……', date: getRecentDate(8) }, sender: '静湖日报' }
         ],
         wechat: [
           { type: 'divider', text: getRecentDate(30) + ' 下午14:20' },
-          { type: 'other', text: '欢迎使用微信！', meta: '微信团队' },
-          { type: 'other', text: '我们致力于为您提供安全、稳定的即时通讯服务。', meta: '微信团队' },
+          { type: 'other', text: '欢迎使用微信！', sender: '微信团队' },
+          { type: 'other', text: '我们致力于为您提供安全、稳定的即时通讯服务。', sender: '微信团队' },
           { type: 'divider', text: getRecentDate(20) + ' 上午10:00' },
-          { type: 'other', text: '近期发现有不法分子利用聊天功能传播恶意文件，请勿轻易下载来源不明的压缩包。', meta: '微信安全中心' },
-          { type: 'other', text: '如遇到异常情况，请及时向我们反馈。', meta: '微信安全中心' },
+          { type: 'other', text: '近期发现有不法分子利用聊天功能传播恶意文件，请勿轻易下载来源不明的压缩包。', sender: '微信安全中心' },
+          { type: 'other', text: '如遇到异常情况，请及时向我们反馈。', sender: '微信安全中心' },
           { type: 'divider', text: getRecentDate(2) + ' 下午18:00' },
-          { type: 'other', text: '系统提醒：您的账户登录了一台新设备，若非本人操作，请立即修改密码。', meta: '微信团队' }
+          { type: 'other', text: '系统提醒：您的账户登录了一台新设备，若非本人操作，请立即修改密码。', sender: '微信团队' }
         ]
       };
 
@@ -153,39 +156,36 @@
 
       function escapeHtml(str) { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-      // 创建带头像的消息行
-      function createMessageElement(type, text, meta) {
+      // 创建消息元素（昵称在上方）
+      function createMessageElement(type, text, senderName) {
         var row = document.createElement('div');
-        row.className = 'message-row ' + (type === 'system' ? 'system' : type);
+        row.className = 'message-row ' + type;
         if (type === 'system') {
           row.innerHTML = '<div class="message-body"><div class="bubble">' + escapeHtml(text) + '</div></div>';
           return row;
         }
-        // 确定头像图片
+        // 头像路径
         var avatarSrc = type === 'mine' ? '../assets/images/wechat_avatar_chenyuan.png' : '../assets/images/wechat_avatar_linyue.png';
         var avatarHtml = '<div class="message-avatar"><img src="' + avatarSrc + '" alt="头像" onerror="this.style.display=\'none\'"></div>';
-        var bubbleHtml = '<div class="message-body"><div class="bubble">' + escapeHtml(text) + '</div><div class="meta">' + escapeHtml(meta) + '</div></div>';
-        if (type === 'mine') {
-          // 自己的消息：头像在右
-          row.innerHTML = bubbleHtml + avatarHtml;
-        } else {
-          // 对方的消息：头像在左
-          row.innerHTML = avatarHtml + bubbleHtml;
-        }
+        var nameHtml = senderName ? '<div class="sender-name">' + escapeHtml(senderName) + '</div>' : '';
+        var bubbleHtml = '<div class="bubble">' + escapeHtml(text) + '</div>';
+        var bodyHtml = '<div class="message-body">' + nameHtml + bubbleHtml + '</div>';
+        row.innerHTML = type === 'mine' ? bodyHtml + avatarHtml : avatarHtml + bodyHtml;
         return row;
       }
 
-      // 创建公众号推文元素
-      function createArticleElement(article, meta) {
+      // 创建公众号推文（昵称在上方）
+      function createArticleElement(article, senderName) {
         var row = document.createElement('div');
         row.className = 'message-row other';
         var avatarHtml = '<div class="message-avatar"><img src="../assets/images/wechat_avatar_linyue.png" alt="头像" onerror="this.style.display=\'none\'"></div>';
+        var nameHtml = senderName ? '<div class="sender-name">' + escapeHtml(senderName) + '</div>' : '';
         var cardHtml = '<div class="article-card">' +
           '<div class="cover"><img src="' + (article.cover || '') + '" alt="封面" onerror="this.style.display=\'none\'; this.parentNode.innerHTML=\'<span>封面图</span>\'"></div>' +
           '<div class="title">' + escapeHtml(article.title) + '</div>' +
           '<div class="desc">' + escapeHtml(article.desc) + '</div>' +
           '<div class="pub-date">' + escapeHtml(article.date) + '</div></div>';
-        var bodyHtml = '<div class="message-body">' + cardHtml + '<div class="meta">' + escapeHtml(meta) + '</div></div>';
+        var bodyHtml = '<div class="message-body">' + nameHtml + cardHtml + '</div>';
         row.innerHTML = avatarHtml + bodyHtml;
         return row;
       }
@@ -197,9 +197,9 @@
           if (item.type === 'divider') {
             var div = document.createElement('div'); div.className = 'time-divider'; div.textContent = item.text; chatLog.appendChild(div);
           } else if (item.article) {
-            chatLog.appendChild(createArticleElement(item.article, item.meta));
+            chatLog.appendChild(createArticleElement(item.article, item.sender));
           } else {
-            chatLog.appendChild(createMessageElement(item.type, item.text, item.meta));
+            chatLog.appendChild(createMessageElement(item.type, item.text, item.sender));
           }
         });
         chatLog.scrollTop = chatLog.scrollHeight;
@@ -219,11 +219,8 @@
 
         // 2秒后自动回复
         setTimeout(function() {
-          // 添加自动回复消息
-          var replyText = '[自动回复]你好，我现在不在线，有事请留言。';
-          chatLog.appendChild(createMessageElement('other', replyText, '林越'));
+          chatLog.appendChild(createMessageElement('other', '[自动回复]你好，我现在不在线，有事请留言。', '林越'));
           chatLog.scrollTop = chatLog.scrollHeight;
-          // 播放自动回复音效
           if (autoReplySound) {
             autoReplySound.currentTime = 0;
             autoReplySound.play().catch(function() {});
