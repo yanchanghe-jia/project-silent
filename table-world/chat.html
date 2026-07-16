@@ -23,26 +23,20 @@
 
     /* 消息行 */
     .message-row { display: flex; margin-bottom: 20px; }
-    .message-row.mine { flex-direction: row-reverse; }
-    .message-row.other { flex-direction: row; }
+    .message-row.other { justify-content: flex-start; }
+    .message-row.mine { justify-content: flex-end; }
     .message-row.system { justify-content: center; }
 
-    .message-avatar { width: 36px; height: 36px; border-radius: 4px; flex-shrink: 0; overflow: hidden; }
+    .message-avatar { width: 36px; height: 36px; border-radius: 4px; flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: #fff; }
     .message-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    /* 头像与气泡之间的间距 */
-    .message-row.mine .message-avatar { margin-left: 10px; }
-    .message-row.other .message-avatar { margin-right: 10px; }
 
-    .message-body { max-width: 60%; display: flex; flex-direction: column; }
+    .message-body { max-width: 55%; display: flex; flex-direction: column; }
     .message-body .sender-name { font-size: 11px; color: #999; margin-bottom: 4px; padding: 0 4px; }
     .message-body .bubble { padding: 10px 15px; border-radius: 4px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
-    /* 对方气泡 */
-    .message-row.other .bubble { background: #fff; border: 1px solid #ededed; }
     .message-row.other .sender-name { text-align: left; }
-    /* 自己气泡 */
-    .message-row.mine .bubble { background: #95EC69; }
     .message-row.mine .sender-name { text-align: right; }
-    /* 系统消息 */
+    .message-row.other .bubble { background: #fff; border: 1px solid #ededed; }
+    .message-row.mine .bubble { background: #95EC69; }
     .message-row.system .bubble { background: #e5e5e5; color: #888; font-size: 12px; border-radius: 4px; padding: 5px 12px; max-width: 100%; }
     .message-row.system .sender-name { display: none; }
 
@@ -64,14 +58,10 @@
   <div class="wechat-pc">
     <div class="contact-list">
       <div class="search-box"><input type="text" placeholder="搜索" disabled></div>
-      <!-- 好友 - 使用真实头像 -->
       <div class="contact-item active" data-contact="linyue" data-type="friend">
-        <div class="avatar">
-          <img src="../assets/images/wechat_avatar_linyue.png" alt="林越">
-        </div>
+        <div class="avatar"><img src="../assets/images/wechat_avatar_linyue.png" alt="林越"></div>
         <div class="name">林越</div>
       </div>
-      <!-- 公众号 -->
       <div class="contact-item" data-contact="shentan" data-type="official">
         <div class="avatar" style="background:#FF6B6B;">探</div>
         <div class="name">深夜探秘</div>
@@ -81,7 +71,7 @@
         <div class="name">静湖日报</div>
       </div>
       <div class="contact-item" data-contact="wechat" data-type="official">
-        <div class="avatar" style="background:#999;">微</div>
+        <div class="avatar" style="background:#07C160;">微</div>
         <div class="name">微信团队</div>
       </div>
     </div>
@@ -96,7 +86,6 @@
     </div>
   </div>
 
-  <!-- 音频：自动回复提示音 -->
   <audio id="autoReplySound" src="../assets/audio/auto_reply.mp3" preload="auto"></audio>
 
   <script>
@@ -110,6 +99,13 @@
       }
 
       var dateLabels = { day5: getRecentDate(5), day3: getRecentDate(3), yesterday: '昨天', today: getRecentDate(0) };
+
+      var avatarConfig = {
+        linyue: { type: 'friend', src: '../assets/images/wechat_avatar_linyue.png', color: '#07C160', text: '林' },
+        shentan: { type: 'official', src: '', color: '#FF6B6B', text: '探' },
+        daily: { type: 'official', src: '', color: '#4ECDC4', text: '日' },
+        wechat: { type: 'official', src: '', color: '#07C160', text: '微' }
+      };
 
       var chatData = {
         linyue: [
@@ -144,7 +140,7 @@
           { type: 'divider', text: getRecentDate(4) + ' 上午08:00' },
           { type: 'other', text: '【社区通知】静湖镇天文观测站因设施老化，将于本月起封闭维护，请市民不要靠近。', sender: '静湖日报' },
           { type: 'divider', text: getRecentDate(8) + ' 上午07:45' },
-          { type: 'other', article: { cover: '../assets/images/placeholder_observatory.png', title: '老档案：1998年天文台研究员失踪事件回顾', desc: '上世纪九十年代某天夜晚，静湖镇天文观测站研究员魏明远在值夜班时神秘失踪，至今下落不明。警方当时以意外坠崖结案，但诸多疑点至今未解……', date: getRecentDate(8) }, sender: '静湖日报' }
+          { type: 'other', article: { cover: '../assets/images/placeholder_observatory.png', title: '老档案：1998年天文台研究员失踪事件回顾', desc: '上世纪九十年代某天夜里，静湖镇天文观测站研究员魏明远在值夜班时神秘失踪，至今下落不明。警方当时以意外坠崖结案，但诸多疑点至今未解……', date: getRecentDate(8) }, sender: '静湖日报' }
         ],
         wechat: [
           { type: 'divider', text: getRecentDate(30) + ' 下午14:20' },
@@ -165,26 +161,43 @@
 
       function escapeHtml(str) { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-      function createMessageElement(type, text, senderName) {
+      function getAvatarHtml(contact, senderName) {
+        var config = avatarConfig[contact] || { type: 'friend', src: '', color: '#ccc', text: '?' };
+        if (contact === 'linyue' && senderName === '陈垣') {
+          return '<div class="message-avatar"><img src="../assets/images/wechat_avatar_chenyuan.png" alt="头像" onerror="this.style.display=\'none\'"></div>';
+        } else if (config.type === 'friend') {
+          return '<div class="message-avatar"><img src="' + config.src + '" alt="头像" onerror="this.style.display=\'none\'"></div>';
+        } else {
+          return '<div class="message-avatar" style="background:' + config.color + ';">' + config.text + '</div>';
+        }
+      }
+
+      function createMessageElement(type, text, senderName, contact) {
         var row = document.createElement('div');
-        row.className = 'message-row ' + (type === 'system' ? 'system' : type);
         if (type === 'system') {
+          row.className = 'message-row system';
           row.innerHTML = '<div class="message-body"><div class="bubble">' + escapeHtml(text) + '</div></div>';
           return row;
         }
-        var avatarSrc = type === 'mine' ? '../assets/images/wechat_avatar_chenyuan.png' : '../assets/images/wechat_avatar_linyue.png';
-        var avatarHtml = '<div class="message-avatar"><img src="' + avatarSrc + '" alt="头像" onerror="this.style.display=\'none\'"></div>';
+        row.className = 'message-row ' + type;
+        var avatarHtml = getAvatarHtml(contact, senderName);
         var nameHtml = senderName ? '<div class="sender-name">' + escapeHtml(senderName) + '</div>' : '';
         var bubbleHtml = '<div class="bubble">' + escapeHtml(text) + '</div>';
         var bodyHtml = '<div class="message-body">' + nameHtml + bubbleHtml + '</div>';
-        row.innerHTML = type === 'mine' ? bodyHtml + avatarHtml : avatarHtml + bodyHtml;
+        // 自己的消息：头像在右，气泡在左
+        // 对方消息：头像在左，气泡在右
+        if (type === 'mine') {
+          row.innerHTML = bodyHtml + avatarHtml;
+        } else {
+          row.innerHTML = avatarHtml + bodyHtml;
+        }
         return row;
       }
 
-      function createArticleElement(article, senderName) {
+      function createArticleElement(article, senderName, contact) {
         var row = document.createElement('div');
         row.className = 'message-row other';
-        var avatarHtml = '<div class="message-avatar"><img src="../assets/images/wechat_avatar_linyue.png" alt="头像" onerror="this.style.display=\'none\'"></div>';
+        var avatarHtml = getAvatarHtml(contact, senderName);
         var nameHtml = senderName ? '<div class="sender-name">' + escapeHtml(senderName) + '</div>' : '';
         var cardHtml = '<div class="article-card">' +
           '<div class="cover"><img src="' + (article.cover || '') + '" alt="封面" onerror="this.style.display=\'none\'; this.parentNode.innerHTML=\'<span>封面图</span>\'"></div>' +
@@ -203,9 +216,9 @@
           if (item.type === 'divider') {
             var div = document.createElement('div'); div.className = 'time-divider'; div.textContent = item.text; chatLog.appendChild(div);
           } else if (item.article) {
-            chatLog.appendChild(createArticleElement(item.article, item.sender));
+            chatLog.appendChild(createArticleElement(item.article, item.sender, contact));
           } else {
-            chatLog.appendChild(createMessageElement(item.type, item.text, item.sender));
+            chatLog.appendChild(createMessageElement(item.type, item.text, item.sender, contact));
           }
         });
         chatLog.scrollTop = chatLog.scrollHeight;
@@ -218,13 +231,13 @@
         if (currentContact !== 'linyue') return;
         var text = input.value.trim();
         if (!text) return;
-        chatLog.appendChild(createMessageElement('mine', text, '陈垣'));
+        chatLog.appendChild(createMessageElement('mine', text, '陈垣', 'linyue'));
         chatLog.scrollTop = chatLog.scrollHeight;
         input.value = '';
         input.focus();
 
         setTimeout(function() {
-          chatLog.appendChild(createMessageElement('other', '[自动回复]你好，我现在不在线，有事请留言。', '林越'));
+          chatLog.appendChild(createMessageElement('other', '[自动回复]你好，我现在不在线，有事请留言。', '林越', 'linyue'));
           chatLog.scrollTop = chatLog.scrollHeight;
           if (autoReplySound) {
             autoReplySound.currentTime = 0;
