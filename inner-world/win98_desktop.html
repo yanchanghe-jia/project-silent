@@ -552,6 +552,7 @@
     function showAntiDebugOverlay() {
       if (isAntiDebugActive) return;
       isAntiDebugActive = true;
+      bgmInner.pause();
       antiDebugOverlay.classList.remove('active-out');
       antiDebugOverlay.style.display = 'flex';
       void antiDebugOverlay.offsetWidth;
@@ -564,6 +565,7 @@
       isAntiDebugActive = false;
       antiDebugOverlay.classList.remove('active-in');
       antiDebugOverlay.classList.add('active-out');
+      bgmInner.play().catch(function(){});
       setTimeout(function() {
         antiDebugOverlay.style.display = 'none';
         antiDebugOverlay.classList.remove('active-out');
