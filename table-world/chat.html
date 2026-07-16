@@ -20,16 +20,20 @@
     .chat-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
     .chat-header { padding: 15px 20px; border-bottom: 1px solid #e0e0e0; font-size: 16px; font-weight: bold; background: #fafafa; flex-shrink: 0; }
     .chat-log { flex: 1; padding: 20px; overflow-y: auto; background: #f5f5f5; }
-    .message { margin-bottom: 20px; display: flex; flex-direction: column; }
-    .message.mine { align-items: flex-end; }
-    .message.other { align-items: flex-start; }
-    .message.system { align-items: center; }
-    .message .bubble { max-width: 70%; padding: 10px 15px; border-radius: 4px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
-    .message.mine .bubble { background: #95EC69; }
-    .message.other .bubble { background: #fff; border: 1px solid #ededed; }
-    .message.system .bubble { background: #e5e5e5; color: #888; font-size: 12px; border-radius: 4px; padding: 5px 12px; }
-    .message .meta { font-size: 11px; color: #999; margin-top: 4px; padding: 0 4px; }
-    .message.system .meta { display: none; }
+    /* 消息行：左右对齐 */
+    .message-row { display: flex; align-items: flex-end; margin-bottom: 20px; gap: 8px; }
+    .message-row.mine { flex-direction: row-reverse; }
+    .message-row.other { flex-direction: row; }
+    .message-row.system { justify-content: center; }
+    .message-avatar { width: 36px; height: 36px; border-radius: 4px; flex-shrink: 0; overflow: hidden; }
+    .message-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .message-body { max-width: 60%; display: flex; flex-direction: column; }
+    .message-body .bubble { padding: 10px 15px; border-radius: 4px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
+    .message-row.mine .bubble { background: #95EC69; }
+    .message-row.other .bubble { background: #fff; border: 1px solid #ededed; }
+    .message-row.system .bubble { background: #e5e5e5; color: #888; font-size: 12px; border-radius: 4px; padding: 5px 12px; max-width: 100%; }
+    .message-body .meta { font-size: 11px; color: #999; margin-top: 4px; padding: 0 4px; }
+    .message-row.system .meta { display: none; }
     .time-divider { text-align: center; margin: 15px 0; font-size: 12px; color: #999; }
     .chat-input-area { border-top: 1px solid #e0e0e0; padding: 15px; background: #fff; display: flex; gap: 10px; flex-shrink: 0; }
     .chat-input-area.hidden { display: none; }
@@ -48,7 +52,7 @@
   <div class="wechat-pc">
     <div class="contact-list">
       <div class="search-box"><input type="text" placeholder="搜索" disabled></div>
-      <!-- 好友 -->
+      <!-- 好友 - 头像使用图片 -->
       <div class="contact-item active" data-contact="linyue" data-type="friend">
         <div class="avatar">
           <img src="../assets/images/wechat_avatar_linyue.png" alt="林越">
@@ -80,10 +84,8 @@
     </div>
   </div>
 
-  <!-- 音频占位符 -->
-  <audio id="msgSound" preload="auto">
-    <source src="../assets/audio/message.mp3" type="audio/mpeg">
-  </audio>
+  <!-- 音频：自动回复提示音 -->
+  <audio id="autoReplySound" src="../assets/audio/auto_reply.mp3" preload="auto"></audio>
 
   <script>
     (function() {
@@ -100,10 +102,10 @@
       var chatData = {
         linyue: [
           { type: 'divider', text: dateLabels.day5 + ' 晚上21:15' },
-          { type: 'other', text: '陈垣，你听说过静湖镇那个案子吗？九十年代天文观测站研究员失踪的事。', meta: '林越' },
+          { type: 'other', text: '陈垣，你听说过静湖镇那个案子吗？1998年天文观测站研究员失踪的事。', meta: '林越' },
           { type: 'mine', text: '好像有点印象，但网上资料特别少。你找到什么了？', meta: '陈垣' },
           { type: 'divider', text: dateLabels.day3 + ' 下午15:40' },
-          { type: 'other', text: "我托人搞到了一批旧档案的电子版，里面提到了一个坐标。那个地方就在静湖镇废弃观测站附近。", meta: '林越' },
+          { type: 'other', text: "我托人搞到了一批旧档案的电子版，里面提到了一个坐标：北纬39°24'，东经115°48'。那个地方就在静湖镇废弃观测站附近。", meta: '林越' },
           { type: 'mine', text: '你打算自己去？别冲动，那地方太偏了。', meta: '陈垣' },
           { type: 'divider', text: dateLabels.yesterday + ' 上午10:08' },
           { type: 'other', text: '我已经在路上了。档案里还说，观测站当年的无线电信号记录过一段奇怪的脉冲，听起来像是有规律的数字。', meta: '林越' },
@@ -151,51 +153,82 @@
 
       function escapeHtml(str) { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+      // 创建带头像的消息行
+      function createMessageElement(type, text, meta) {
+        var row = document.createElement('div');
+        row.className = 'message-row ' + (type === 'system' ? 'system' : type);
+        if (type === 'system') {
+          row.innerHTML = '<div class="message-body"><div class="bubble">' + escapeHtml(text) + '</div></div>';
+          return row;
+        }
+        // 确定头像图片
+        var avatarSrc = type === 'mine' ? '../assets/images/wechat_avatar_chenyuan.png' : '../assets/images/wechat_avatar_linyue.png';
+        var avatarHtml = '<div class="message-avatar"><img src="' + avatarSrc + '" alt="头像" onerror="this.style.display=\'none\'"></div>';
+        var bubbleHtml = '<div class="message-body"><div class="bubble">' + escapeHtml(text) + '</div><div class="meta">' + escapeHtml(meta) + '</div></div>';
+        if (type === 'mine') {
+          // 自己的消息：头像在右
+          row.innerHTML = bubbleHtml + avatarHtml;
+        } else {
+          // 对方的消息：头像在左
+          row.innerHTML = avatarHtml + bubbleHtml;
+        }
+        return row;
+      }
+
+      // 创建公众号推文元素
+      function createArticleElement(article, meta) {
+        var row = document.createElement('div');
+        row.className = 'message-row other';
+        var avatarHtml = '<div class="message-avatar"><img src="../assets/images/wechat_avatar_linyue.png" alt="头像" onerror="this.style.display=\'none\'"></div>';
+        var cardHtml = '<div class="article-card">' +
+          '<div class="cover"><img src="' + (article.cover || '') + '" alt="封面" onerror="this.style.display=\'none\'; this.parentNode.innerHTML=\'<span>封面图</span>\'"></div>' +
+          '<div class="title">' + escapeHtml(article.title) + '</div>' +
+          '<div class="desc">' + escapeHtml(article.desc) + '</div>' +
+          '<div class="pub-date">' + escapeHtml(article.date) + '</div></div>';
+        var bodyHtml = '<div class="message-body">' + cardHtml + '<div class="meta">' + escapeHtml(meta) + '</div></div>';
+        row.innerHTML = avatarHtml + bodyHtml;
+        return row;
+      }
+
       function renderHistory(contact) {
         var messages = chatData[contact]; if (!messages) return;
         chatLog.innerHTML = '';
         messages.forEach(function(item) {
           if (item.type === 'divider') {
             var div = document.createElement('div'); div.className = 'time-divider'; div.textContent = item.text; chatLog.appendChild(div);
-          } else if (item.type === 'system') {
-            var msgDiv = document.createElement('div'); msgDiv.className = 'message system';
-            msgDiv.innerHTML = '<div class="bubble">' + escapeHtml(item.text) + '</div>'; chatLog.appendChild(msgDiv);
           } else if (item.article) {
-            var msgDiv = document.createElement('div'); msgDiv.className = 'message other';
-            var article = item.article;
-            var cardHtml = '<div class="article-card">' +
-              '<div class="cover"><img src="' + (article.cover || '') + '" alt="封面" onerror="this.style.display=\'none\'; this.parentNode.innerHTML=\'<span>封面图</span>\'"></div>' +
-              '<div class="title">' + escapeHtml(article.title) + '</div>' +
-              '<div class="desc">' + escapeHtml(article.desc) + '</div>' +
-              '<div class="pub-date">' + escapeHtml(article.date) + '</div></div>';
-            msgDiv.innerHTML = cardHtml + '<div class="meta">' + item.meta + '</div>'; chatLog.appendChild(msgDiv);
+            chatLog.appendChild(createArticleElement(item.article, item.meta));
           } else {
-            var msgDiv = document.createElement('div'); msgDiv.className = 'message ' + item.type;
-            msgDiv.innerHTML = '<div class="bubble">' + escapeHtml(item.text) + '</div><div class="meta">' + item.meta + '</div>'; chatLog.appendChild(msgDiv);
+            chatLog.appendChild(createMessageElement(item.type, item.text, item.meta));
           }
         });
         chatLog.scrollTop = chatLog.scrollHeight;
       }
 
       var input = document.getElementById('messageInput'), btn = document.getElementById('sendBtn');
-      var msgSound = document.getElementById('msgSound');
+      var autoReplySound = document.getElementById('autoReplySound');
 
       function sendMessage() {
         if (currentContact !== 'linyue') return;
         var text = input.value.trim();
         if (!text) return;
-        var msgDiv = document.createElement('div'); msgDiv.className = 'message mine';
-        msgDiv.innerHTML = '<div class="bubble">' + escapeHtml(text) + '</div><div class="meta">陈垣</div>';
-        chatLog.appendChild(msgDiv);
+        chatLog.appendChild(createMessageElement('mine', text, '陈垣'));
         chatLog.scrollTop = chatLog.scrollHeight;
         input.value = '';
         input.focus();
 
-        // 播放发送音效
-        if (msgSound) {
-          msgSound.currentTime = 0;
-          msgSound.play().catch(function() {});
-        }
+        // 2秒后自动回复
+        setTimeout(function() {
+          // 添加自动回复消息
+          var replyText = '[自动回复]你好，我现在不在线，有事请留言。';
+          chatLog.appendChild(createMessageElement('other', replyText, '林越'));
+          chatLog.scrollTop = chatLog.scrollHeight;
+          // 播放自动回复音效
+          if (autoReplySound) {
+            autoReplySound.currentTime = 0;
+            autoReplySound.play().catch(function() {});
+          }
+        }, 2000);
       }
 
       btn.addEventListener('click', sendMessage);
